@@ -11,5 +11,8 @@
     "url": "git+https://github.com/Jashanpreet2/fragments.git"
   },
   "author": "Jashanpreet Singh",
-  "license": "UNLICENSED"
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "prettier": "3.4.2"
+  }
 }

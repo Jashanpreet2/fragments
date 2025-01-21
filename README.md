@@ -2,6 +2,8 @@
 
 CCP555 Labs
 
+# Javascript
+
 ## Scripts
 
 ###### Lint
@@ -23,3 +25,17 @@ Description: Runs the development nodemon server. The server restarts when any c
 
 Command: npm run debug
 Description: Starts the debugging server
+
+
+# Go
+
+## Resources
+
+Gin Documentation (server framework): https://gin-gonic.com/docs/
+Zap Logger Documentation: https://pkg.go.dev/go.uber.org/zap
+cognitoJwtVerify Documentation (used to verify cognito tokens): https://pkg.go.dev/github.com/jhosan7/cognito-jwt-verify#section-readme
+
+## Scripts
+
+###### go run server.go
+Starts the server

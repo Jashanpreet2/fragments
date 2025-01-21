@@ -1,10 +1,15 @@
 // src/server.js
-require('dotenv').config();
+
 // We want to gracefully shutdown our server
 const stoppable = require('stoppable');
 
 // Get our logger instance
 const logger = require('./logger');
+
+// Log environment variables if running in debug mode
+if (process.env.LOG_LEVEL == 'debug') {
+  logger.info(process.env);
+}
 
 // Get our express app instance
 const app = require('./app');

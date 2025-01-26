@@ -90,11 +90,6 @@ func authenticate() gin.HandlerFunc {
 	}
 }
 
-func handler(w http.ResponseWriter, r *http.Request) {
-	logger.Info("Received a request!")
-	fmt.Fprintf(w, "Sample response")
-}
-
 func main() {
 	// Create and assign logger instance to the global variable
 	var err error

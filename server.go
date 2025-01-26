@@ -119,5 +119,8 @@ func main() {
 		c.JSON(http.StatusAccepted, gin.H{"message": "You have been verified!"})
 	})
 
-	r.Run(port)
+	err = r.Run(port)
+	if err != nil {
+		sugar.Fatal("Failed to start the server")
+	}
 }

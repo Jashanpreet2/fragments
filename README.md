@@ -10,5 +10,13 @@ cognitoJwtVerify Documentation (used to verify cognito tokens): https://pkg.go.d
 
 ## Scripts
 
-###### go run server.go
-Starts the server
+###### Start the server
+go run server.go
+
+###### Start server with hot reloading
+1. air init
+2. air
+
+###### Generate coverage report
+1. go test -coverprofile="c.out"
+2. go tool cover -html="c.out"

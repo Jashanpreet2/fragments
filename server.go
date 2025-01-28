@@ -20,16 +20,15 @@ var sugar *zap.SugaredLogger
 var localCsvAuthentication bool
 
 func Initialize() {
-	var err error
 	// Load environment variables
-	err = godotenv.Load("env.test")
+	err := godotenv.Load("env.test")
 	if err != nil {
 		log.Fatal("Failed to load environment variables")
 	}
 
 	// Logger setup
 	logger = getLogger(os.Getenv("LOG_LEVEL"))
-	defer logger.Sync()
+
 	sugar = logger.Sugar()
 
 	if os.Getenv("TEST_PROFILE_PATH") == "" {
@@ -190,6 +189,6 @@ func main() {
 	r := getRouter()
 	err = r.Run(port)
 	if err != nil {
-		// sugar.Fatal("Failed to start the server")
+		sugar.Fatal("Failed to start the server")
 	}
 }

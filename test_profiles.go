@@ -2,45 +2,47 @@ package main
 
 import (
 	"encoding/csv"
-	"fmt"
 	"log"
 	"os"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
-func generateCsvFile() {
-	user1 := "user1@email.com"
-	user1password := "password1"
-	user1hash, err := bcrypt.GenerateFromPassword([]byte(user1password), bcrypt.DefaultCost)
-	if err != nil {
-		fmt.Printf("Failed to hash user1's password!")
-	}
+// func generateCsvFile() {
+// 	user1 := "user1@email.com"
+// 	user1password := "password1"
+// 	user1hash, err := bcrypt.GenerateFromPassword([]byte(user1password), bcrypt.DefaultCost)
+// 	if err != nil {
+// 		fmt.Printf("Failed to hash user1's password!")
+// 	}
 
-	user2 := "user2@email.com"
-	user2password := "password2"
-	user2hash, err := bcrypt.GenerateFromPassword([]byte(user2password), bcrypt.DefaultCost)
-	if err != nil {
-		fmt.Printf("Failed to hash user2's password!")
-	}
+// 	user2 := "user2@email.com"
+// 	user2password := "password2"
+// 	user2hash, err := bcrypt.GenerateFromPassword([]byte(user2password), bcrypt.DefaultCost)
+// 	if err != nil {
+// 		fmt.Printf("Failed to hash user2's password!")
+// 	}
 
-	data := [][]string{
-		{"username", "password"},
-		{user1, string(user1hash)},
-		{user2, string(user2hash)},
-	}
+// 	data := [][]string{
+// 		{"username", "password"},
+// 		{user1, string(user1hash)},
+// 		{user2, string(user2hash)},
+// 	}
 
-	file, err := os.Create("testProfiless.csv")
-	if err != nil {
-		log.Fatal("Failed to create test profiles csv")
-	}
-	defer file.Close()
+// 	file, err := os.Create("testProfiless.csv")
+// 	if err != nil {
+// 		log.Fatal("Failed to create test profiles csv")
+// 	}
+// 	defer file.Close()
 
-	w := csv.NewWriter(file)
-	defer w.Flush()
+// 	w := csv.NewWriter(file)
+// 	defer w.Flush()
 
-	w.WriteAll(data)
-}
+// 	err = w.WriteAll(data)
+// 	if err != nil {
+// 		log.Fatal("Failed to save test profiles")
+// 	}
+// }
 
 func AuthenticateTestProfile(filepath string, username string, password string) bool {
 	file, err := os.Open("testProfiles.csv")

@@ -93,7 +93,7 @@ func TestIncorrectLoginCredentials(t *testing.T) {
 	r.ServeHTTP(w, req)
 
 	// Assert
-	assert.Equal(t, w.Result().StatusCode, 404)
+	assert.Equal(t, w.Result().StatusCode, 401)
 }
 
 func TestAuthenticatedUser(t *testing.T) {

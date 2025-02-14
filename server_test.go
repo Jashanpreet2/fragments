@@ -179,7 +179,7 @@ func TestGetFragment(t *testing.T) {
 
 	// Set up and make request
 	w := httptest.NewRecorder()
-	tempFile, _ := os.CreateTemp("./temp", "*.txt")
+	tempFile, _ := os.Create("temp.txt")
 	tempLocation, _ := filepath.Abs(tempFile.Name())
 	fmt.Println("Current path: ", tempLocation)
 	fileData := "Some test data in the file!"
@@ -222,6 +222,7 @@ func TestGetFragment(t *testing.T) {
 
 	tempFile.Close()
 	defer (func() {
+
 		err := os.Remove(tempLocation)
 		fmt.Println(err)
 	})()

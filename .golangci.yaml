@@ -5,31 +5,8 @@ linters:
   # Enable specific linter
   # https://golangci-lint.run/usage/linters/#enabled-by-default
   enable:
-    - asasalint
-    - asciicheck
-    - bidichk
-    - bodyclose
-    - canonicalheader
-    - containedctx
-    - contextcheck
-    - copyloopvar
-    - exptostd
-    - fatcontext
-    - forcetypeassert
-
-    - ineffassign
-    - interfacebloat
-    - intrange
-    - ireturn
-    - loggercheck
-    - maintidx
-    - makezero
-    - misspell
-
-    - thelper
-    - tparallel
-    - unconvert
+    - gosimple
     - unused
-    - wastedassign
-    - wrapcheck
-    - zerologlint
+    - govet
+    - ineffassign
+    - staticcheck

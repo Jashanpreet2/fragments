@@ -268,7 +268,8 @@ func getRouter() *gin.Engine {
 			return
 		}
 
-		tmp_dir, err := os.MkdirTemp("temp/", "*")
+		pwd, _ := os.Getwd()
+		tmp_dir, err := os.MkdirTemp(filepath.Join(pwd, "temp"), "*")
 		if err != nil {
 			sugar.Info(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"message": "Server failed to send file."})

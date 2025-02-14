@@ -267,33 +267,22 @@ func getRouter() *gin.Engine {
 			c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to find the fragment data"})
 			return
 		}
-
-		pwd, _ := os.Getwd()
-		tmp_dir, err := os.MkdirTemp(filepath.Join(pwd, "temp"), "*")
-		os.Chmod(tmp_dir, 0777)
+		pwd, err := os.Getwd()
 		if err != nil {
 			sugar.Info(err)
-			c.JSON(http.StatusInternalServerError, gin.H{"message": "Server failed to send file."})
-			return
 		}
-		sugar.Info(tmp_dir)
-		if err := os.Chmod(tmp_dir, os.ModeDir); err != nil {
-			sugar.Warn("Failed to chmod file permissions. Unable to send file to user")
-			c.JSON(http.StatusInternalServerError, gin.H{"message": "Server failed in processing the file"})
-		}
-		new_file, err := os.Create(filepath.Join(tmp_dir, filepath.Base(fragment.FragmentName)))
+		new_file, err := os.Create(filepath.Join(pwd, "tmp"+filepath.Base(fragment.FragmentName)))
 		if err != nil {
 			sugar.Info(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"message": "Server failed to send file"})
 			return
 		}
-		os.Chmod(new_file.Name(), 0777)
 		fmt.Println("filepath", new_file.Name())
 		io.Copy(new_file, file)
-		c.FileAttachment(filepath.Join(tmp_dir, fragment.FragmentName), fragment.FragmentName)
+		c.FileAttachment(new_file.Name(), fragment.FragmentName)
 
-		defer os.RemoveAll(tmp_dir)
-		defer new_file.Close()
+		new_file.Close()
+		os.Remove(new_file.Name())
 	})
 
 	return r

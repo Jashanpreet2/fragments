@@ -40,7 +40,10 @@ func TestFragmentDBInterface(t *testing.T) {
 		fragmentId := "1"
 		tempFile, _ := os.CreateTemp("", "*")
 		defer os.Remove(tempFile.Name())
-		tempFile.Write([]byte("Example File"))
+		if _, err := tempFile.Write([]byte("Example File")); err != nil {
+			t.Error("Failed to write into temp file")
+			return
+		}
 		ok := WriteFragmentData(userId, fragmentId, tempFile)
 		assert.Equal(t, true, ok)
 	})
@@ -68,7 +71,10 @@ func TestFragmentDBInterface(t *testing.T) {
 		}
 		tempFile, _ := os.CreateTemp("", "*")
 		defer os.Remove(tempFile.Name())
-		tempFile.Write([]byte("Sample data"))
+		if _, err := tempFile.Write([]byte("Sample data")); err != nil {
+			t.Error("Failed to write into temp file")
+			return
+		}
 		ok = WriteFragmentData(frag.OwnerId, frag.Id, tempFile)
 		if !ok {
 			t.Error("Failed to write fragment data")

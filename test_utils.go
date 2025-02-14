@@ -10,7 +10,6 @@ func PreTestSetup() func() {
 	Initialize()
 	return func() {
 		// Might have some test teardown logic later on
-		return
 	}
 }
 

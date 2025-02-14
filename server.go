@@ -16,7 +16,6 @@ import (
 	"github.com/gohugoio/hugo/common/hashing"
 	cognitoJwtVerify "github.com/jhosan7/cognito-jwt-verify"
 	"github.com/joho/godotenv"
-	prettyconsole "github.com/thessem/zap-prettyconsole"
 	"go.uber.org/zap"
 )
 
@@ -72,21 +71,21 @@ func Initialize() {
 }
 
 // Returns the specific logger based on the log level passed.
-func getLogger(logLevel string) *zap.Logger {
-	if logLevel == "Debug" {
-		return prettyconsole.NewLogger(zap.DebugLevel)
-	} else if logLevel == "Info" {
-		return prettyconsole.NewLogger(zap.InfoLevel)
-	} else if logLevel == "Warn" {
-		return prettyconsole.NewLogger(zap.WarnLevel)
-	} else if logLevel == "Error" {
-		return prettyconsole.NewLogger(zap.ErrorLevel)
-	} else if logLevel == "Fatal" {
-		return prettyconsole.NewLogger(zap.FatalLevel)
-	} else {
-		return prettyconsole.NewLogger(zap.InfoLevel)
-	}
-}
+// func getLogger(logLevel string) *zap.Logger {
+// 	if logLevel == "Debug" {
+// 		return prettyconsole.NewLogger(zap.DebugLevel)
+// 	} else if logLevel == "Info" {
+// 		return prettyconsole.NewLogger(zap.InfoLevel)
+// 	} else if logLevel == "Warn" {
+// 		return prettyconsole.NewLogger(zap.WarnLevel)
+// 	} else if logLevel == "Error" {
+// 		return prettyconsole.NewLogger(zap.ErrorLevel)
+// 	} else if logLevel == "Fatal" {
+// 		return prettyconsole.NewLogger(zap.FatalLevel)
+// 	} else {
+// 		return prettyconsole.NewLogger(zap.InfoLevel)
+// 	}
+// }
 
 // Enables Cors and adds any other relevant headers including Cache-Control
 // https://stackoverflow.com/a/29439630
@@ -174,7 +173,11 @@ func authenticate() gin.HandlerFunc {
 
 				sugar.Info(jsonData)
 				var v map[string]string
-				json.Unmarshal(jsonData, &v)
+				if err := json.Unmarshal(jsonData, &v); err != nil {
+					c.JSON(http.StatusBadRequest, gin.H{"message": "Unable to process request"})
+					sugar.Warn("Failed to retrieve user data from request body")
+					c.Abort()
+				}
 				sugar.Info(v["cognito:username"])
 				c.Next()
 			}
@@ -223,8 +226,14 @@ func getRouter() *gin.Engine {
 		}
 		fragment_id := GenerateID(username)
 		fileData := make([]byte, 512)
-		file.Read(fileData)
-		file.Seek(0, 0)
+		if _, err := file.Read(fileData); err != nil {
+			sugar.Error("Failed to read user file")
+			c.JSON(http.StatusBadRequest, gin.H{"message": "Unable to process the uploaded file"})
+		}
+		if _, err := file.Seek(0, 0); err != nil {
+			sugar.Error("Failed to seek file back to the start")
+			c.JSON(http.StatusBadRequest, gin.H{"message": "Server failed in processing the file"})
+		}
 		sugar.Info("DATAA:", string(fileData))
 		fragmentType := fileHeader.Header.Get("Content-Type")
 		if !IsSupportedType(fragmentType) {
@@ -266,7 +275,10 @@ func getRouter() *gin.Engine {
 			return
 		}
 		sugar.Info(tmp_dir)
-		os.Chmod(tmp_dir, os.ModeDir)
+		if err := os.Chmod(tmp_dir, os.ModeDir); err != nil {
+			sugar.Warn("Failed to chmod file permissions. Unable to send file to user")
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "Server failed in processing the file"})
+		}
 		new_file, err := os.Create(filepath.Join(tmp_dir, filepath.Base(fragment.FragmentName)))
 		if err != nil {
 			sugar.Info(err)

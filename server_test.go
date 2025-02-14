@@ -222,7 +222,6 @@ func TestGetFragment(t *testing.T) {
 
 	tempFile.Close()
 	defer (func() {
-
 		err := os.Remove(tempLocation)
 		fmt.Println(err)
 	})()

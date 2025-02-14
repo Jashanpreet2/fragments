@@ -270,6 +270,7 @@ func getRouter() *gin.Engine {
 
 		pwd, _ := os.Getwd()
 		tmp_dir, err := os.MkdirTemp(filepath.Join(pwd, "temp"), "*")
+		os.Chmod(tmp_dir, 0777)
 		if err != nil {
 			sugar.Info(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"message": "Server failed to send file."})
@@ -286,7 +287,8 @@ func getRouter() *gin.Engine {
 			c.JSON(http.StatusInternalServerError, gin.H{"message": "Server failed to send file"})
 			return
 		}
-
+		os.Chmod(new_file.Name(), 0777)
+		fmt.Println("filepath", new_file.Name())
 		io.Copy(new_file, file)
 		c.FileAttachment(filepath.Join(tmp_dir, fragment.FragmentName), fragment.FragmentName)
 

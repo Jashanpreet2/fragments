@@ -14,8 +14,9 @@ cognitoJwtVerify Documentation (used to verify cognito tokens): https://pkg.go.d
 go run server.go
 
 ###### Start server with hot reloading
-1. air init
-2. air
+1. Install air using "go install github.com/air-verse/air@latest"
+2. air init
+3. air
 
 ###### Generate coverage report
 1. go test -coverprofile="c.out"

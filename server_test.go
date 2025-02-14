@@ -1,15 +1,23 @@
 package main
 
 import (
+	"bytes"
+	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestHealthCheck(t *testing.T) {
+	setup := PreTestSetup()
+	defer setup()
+
 	// Set up and make request
 	r := getRouter()
 	w := httptest.NewRecorder()
@@ -21,6 +29,9 @@ func TestHealthCheck(t *testing.T) {
 }
 
 func TestCacheControlHeader(t *testing.T) {
+	setup := PreTestSetup()
+	defer setup()
+
 	// Set up and make request
 	r := getRouter()
 	w := httptest.NewRecorder()
@@ -32,6 +43,9 @@ func TestCacheControlHeader(t *testing.T) {
 }
 
 func TestOkInResponse(t *testing.T) {
+	setup := PreTestSetup()
+	defer setup()
+
 	// Set up and make request
 	r := getRouter()
 	w := httptest.NewRecorder()
@@ -52,6 +66,9 @@ func TestOkInResponse(t *testing.T) {
 }
 
 func TestBodyInformation(t *testing.T) {
+	setup := PreTestSetup()
+	defer setup()
+
 	// Set up and make request
 	r := getRouter()
 	w := httptest.NewRecorder()
@@ -74,9 +91,13 @@ func TestBodyInformation(t *testing.T) {
 }
 
 func TestUnauthenticatedRequest(t *testing.T) {
+	setup := PreTestSetup()
+	defer setup()
+
 	// Set up and make request
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/v1/fragments", nil)
+
 	r := getRouter()
 	r.ServeHTTP(w, req)
 
@@ -85,6 +106,9 @@ func TestUnauthenticatedRequest(t *testing.T) {
 }
 
 func TestIncorrectLoginCredentials(t *testing.T) {
+	setup := PreTestSetup()
+	defer setup()
+
 	// Set up and make request
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/v1/fragments", nil)
@@ -97,6 +121,9 @@ func TestIncorrectLoginCredentials(t *testing.T) {
 }
 
 func TestAuthenticatedUser(t *testing.T) {
+	setup := PreTestSetup()
+	defer setup()
+
 	// Set up and make request
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/v1/fragments", nil)
@@ -106,4 +133,89 @@ func TestAuthenticatedUser(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, w.Result().StatusCode, 200)
+}
+
+func TestPostFragment(t *testing.T) {
+	setup := PreTestSetup()
+	defer setup()
+
+	// Set up and make request
+	w := httptest.NewRecorder()
+
+	tempFile, _ := os.CreateTemp("", "*.txt")
+	defer os.Remove(tempFile.Name())
+	fileData := "Some test data in the file!"
+	tempFile.Write([]byte(fileData))
+	tempFile.Seek(0, 0)
+
+	// Learned from https://andrew-mccall.com/blog/2024/06/golang-send-multipart-form-data-to-api-endpoint/
+	buf := &bytes.Buffer{}
+	mpw := multipart.NewWriter(buf)
+	fwriter, _ := mpw.CreateFormFile("file", tempFile.Name())
+	mpw.FormDataContentType()
+	io.Copy(fwriter, tempFile)
+	mpw.Close()
+
+	req, _ := http.NewRequest("POST", "/v1/fragments", buf)
+	req.Header.Add("Content-Type", mpw.FormDataContentType())
+	req.SetBasicAuth("user1@email.com", "password1")
+
+	_, header, _ := req.FormFile("file")
+	header.Header.Set("Content-Type", "text/plain")
+
+	r := getRouter()
+	r.ServeHTTP(w, req)
+
+	fmt.Println(GetBody(w.Body.Bytes()))
+
+	// Assert
+	assert.Equal(t, 200, w.Result().StatusCode)
+}
+
+func TestGetFragment(t *testing.T) {
+	setup := PreTestSetup()
+	defer setup()
+
+	// Set up and make request
+	w := httptest.NewRecorder()
+
+	tempFile, _ := os.CreateTemp("", "*.txt")
+	defer os.Remove(tempFile.Name())
+	fileData := "Some test data in the file!"
+	tempFile.Write([]byte(fileData))
+	tempFile.Seek(0, 0)
+
+	// Learned from https://andrew-mccall.com/blog/2024/06/golang-send-multipart-form-data-to-api-endpoint/
+	buf := &bytes.Buffer{}
+	mpw := multipart.NewWriter(buf)
+	fwriter, _ := mpw.CreateFormFile("file", tempFile.Name())
+	mpw.FormDataContentType()
+	io.Copy(fwriter, tempFile)
+	mpw.Close()
+
+	req, _ := http.NewRequest("POST", "/v1/fragments", buf)
+	req.Header.Add("Content-Type", mpw.FormDataContentType())
+	req.SetBasicAuth("user1@email.com", "password1")
+
+	_, header, _ := req.FormFile("file")
+	header.Header.Set("Content-Type", "text/plain")
+
+	r := getRouter()
+	r.ServeHTTP(w, req)
+	fmt.Println(GetBody(w.Body.Bytes()))
+	location := GetBody(w.Body.Bytes())["Location"]
+
+	w = httptest.NewRecorder()
+	fmt.Println("Location: ", location)
+	getReq, _ := http.NewRequest("GET", location, nil)
+	getReq.SetBasicAuth("user1@email.com", "password1")
+	r.ServeHTTP(w, getReq)
+
+	size, _ := strconv.Atoi(w.Result().Header.Get("Content-Length"))
+	fmt.Println(size)
+	retrievedFileBuffer := make([]byte, size)
+	w.Body.Read(retrievedFileBuffer)
+	fmt.Println(string(retrievedFileBuffer))
+
+	assert.Equal(t, fileData, string(retrievedFileBuffer))
 }

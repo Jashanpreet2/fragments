@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"strconv"
 	"testing"
 
@@ -179,6 +180,8 @@ func TestGetFragment(t *testing.T) {
 	// Set up and make request
 	w := httptest.NewRecorder()
 	tempFile, _ := os.CreateTemp("./temp", "*.txt")
+	tempLocation, _ := filepath.Abs(tempFile.Name())
+	fmt.Println("Current path: ", tempLocation)
 	fileData := "Some test data in the file!"
 	tempFile.Write([]byte(fileData))
 	tempFile.Seek(0, 0)
@@ -218,4 +221,8 @@ func TestGetFragment(t *testing.T) {
 	assert.Equal(t, fileData, string(retrievedFileBuffer))
 
 	tempFile.Close()
+	defer (func() {
+		err := os.Remove(tempLocation)
+		fmt.Println(err)
+	})()
 }

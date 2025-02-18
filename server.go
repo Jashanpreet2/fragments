@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Jashanpreet2/fragments/localauthentication"
 	"github.com/gin-gonic/gin"
 	"github.com/gohugoio/hugo/common/hashing"
 	cognitoJwtVerify "github.com/jhosan7/cognito-jwt-verify"
@@ -112,7 +113,7 @@ func authenticate() gin.HandlerFunc {
 			sugar.Info("Local authentication using information from CSV files.")
 			req := c.Request
 			if username, password, ok := req.BasicAuth(); ok {
-				if AuthenticateTestProfile(os.Getenv("TEST_PROFILE_PATH"), username, password) {
+				if localauthentication.AuthenticateTestProfile(os.Getenv("TEST_PROFILE_PATH"), username, password) {
 					c.Next()
 				} else {
 					c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid details"})
@@ -172,9 +173,10 @@ func authenticate() gin.HandlerFunc {
 				}
 
 				sugar.Info(jsonData)
-				var v map[string]string
+				var v map[string]any
 				if err := json.Unmarshal(jsonData, &v); err != nil {
 					c.JSON(http.StatusBadRequest, gin.H{"message": "Unable to process request"})
+					sugar.Error(err)
 					sugar.Warn("Failed to retrieve user data from request body")
 					c.Abort()
 				}
@@ -213,7 +215,10 @@ func getRouter() *gin.Engine {
 		c.JSON(http.StatusOK, gin.H{"status": "ok", "fragment_ids": fragment_ids})
 	})
 	v1.POST("/fragments", func(c *gin.Context) {
-		fileHeader, _ := c.FormFile("file")
+		fileHeader, err := c.FormFile("file")
+		if err != nil {
+			sugar.Info(err)
+		}
 		username, ok := GetUsername(c, localCsvAuthentication)
 		if !ok {
 			sugar.Error("Failed to parse username!")

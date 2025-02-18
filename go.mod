@@ -1,4 +1,4 @@
-module fragments
+module github.com/Jashanpreet2/fragments
 
 go 1.23.4
 

@@ -1,0 +1,6 @@
+.air.toml
+tmp/
+.github/
+c.out
+.gitignore
+README.md

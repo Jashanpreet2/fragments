@@ -132,3 +132,4 @@ dist
 # Go
 tmp
 c.out
+fragments.exe

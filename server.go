@@ -211,8 +211,24 @@ func getRouter() *gin.Engine {
 			sugar.Info("Request passed through authentication but still failed to retrieve the username")
 			c.JSON(http.StatusBadRequest, gin.H{"message": "Failed to parse username"})
 		}
-		fragment_ids := GetUserFragmentIds(hashing.HashString(username))
-		c.JSON(http.StatusOK, gin.H{"status": "ok", "fragment_ids": fragment_ids})
+		fragmentIds := GetUserFragmentIds(hashing.HashString(username))
+		if c.Query("expand") == "1" {
+			var fragments []Fragment
+			for _, fragmentId := range fragmentIds {
+				fragment, found := GetFragment(hashing.HashString(username), fragmentId)
+				if !found {
+					sugar.Info("Failed to find fragment with fragment id " + fragmentId + " for user " + username)
+				} else {
+					fragments = append(fragments, fragment)
+				}
+				fragmentsjson, _ := json.Marshal(fragments)
+				sugar.Info(string(fragmentsjson))
+			}
+			c.JSON(http.StatusOK, gin.H{"status": "ok", "fragments": fragments})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"status": "ok", "fragment_ids": fragmentIds})
 	})
 	v1.POST("/fragments", func(c *gin.Context) {
 		fileHeader, err := c.FormFile("file")
@@ -250,11 +266,14 @@ func getRouter() *gin.Engine {
 		fragment.SetData(file)
 		fragment.Save()
 
-		metadata, _ := fragment.GetJson()
+		scheme := "http://"
+		if c.Request.TLS != nil {
+			scheme = "https://"
+		}
 
 		c.JSON(http.StatusOK, gin.H{"status": "ok", "message": "Fragment has successfully been saved",
-			"Location": c.Request.Host + fmt.Sprintf("/v1/fragment/%s", fragment.Id),
-			"metadata": metadata})
+			"Location": scheme + c.Request.Host + fmt.Sprintf("/v1/fragment/%s", fragment.Id),
+			"metadata": fragment})
 	})
 	v1.GET("/fragment/:id", func(c *gin.Context) {
 		sugar.Infof("Request to fetch fragments. User ID: %s. Fragment_id: %s", c.Query("userid"), c.Query("fragment_id"))

@@ -5,11 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
-	"os"
-	"path/filepath"
 	"strconv"
 	"testing"
 
@@ -161,26 +158,11 @@ func TestPostFragment(t *testing.T) {
 	// Set up and make request
 	w := httptest.NewRecorder()
 
-	tempFile, _ := os.CreateTemp("", "*.txt")
-	defer os.Remove(tempFile.Name())
-	fileData := "Some test data in the file!"
-	tempFile.Write([]byte(fileData))
-	tempFile.Seek(0, 0)
+	fileData := []byte("Some test data in the file!")
 
-	// Learned from https://andrew-mccall.com/blog/2024/06/golang-send-multipart-form-data-to-api-endpoint/
-	buf := &bytes.Buffer{}
-	mpw := multipart.NewWriter(buf)
-	fwriter, _ := mpw.CreateFormFile("file", tempFile.Name())
-	mpw.FormDataContentType()
-	io.Copy(fwriter, tempFile)
-	mpw.Close()
-
-	req, _ := http.NewRequest("POST", "/v1/fragments", buf)
-	req.Header.Add("Content-Type", mpw.FormDataContentType())
+	req, _ := http.NewRequest("POST", "/v1/fragments", bytes.NewReader(fileData))
+	req.Header.Add("Content-Type", "text/plain")
 	req.SetBasicAuth("user1@email.com", "password1")
-
-	_, header, _ := req.FormFile("file")
-	header.Header.Set("Content-Type", "text/plain")
 
 	r := getRouter()
 	r.ServeHTTP(w, req)
@@ -197,27 +179,11 @@ func TestGetFragment(t *testing.T) {
 
 	// Set up and make request
 	w := httptest.NewRecorder()
-	tempFile, _ := os.Create("temp.txt")
-	tempLocation, _ := filepath.Abs(tempFile.Name())
-	fmt.Println("Current path: ", tempLocation)
-	fileData := "Some test data in the file!"
-	tempFile.Write([]byte(fileData))
-	tempFile.Seek(0, 0)
+	fileData := []byte("Some test data in the file!")
 
-	// Learned from https://andrew-mccall.com/blog/2024/06/golang-send-multipart-form-data-to-api-endpoint/
-	buf := &bytes.Buffer{}
-	mpw := multipart.NewWriter(buf)
-	fwriter, _ := mpw.CreateFormFile("file", tempFile.Name())
-	mpw.FormDataContentType()
-	io.Copy(fwriter, tempFile)
-	mpw.Close()
-
-	req, _ := http.NewRequest("POST", "/v1/fragments", buf)
-	req.Header.Add("Content-Type", mpw.FormDataContentType())
+	req, _ := http.NewRequest("POST", "/v1/fragments", bytes.NewReader(fileData))
+	req.Header.Add("Content-Type", "text/plain")
 	req.SetBasicAuth("user1@email.com", "password1")
-
-	_, header, _ := req.FormFile("file")
-	header.Header.Set("Content-Type", "text/plain")
 
 	r := getRouter()
 	r.ServeHTTP(w, req)
@@ -237,11 +203,5 @@ func TestGetFragment(t *testing.T) {
 	w.Body.Read(retrievedFileBuffer)
 	fmt.Println(string(retrievedFileBuffer))
 
-	assert.Equal(t, fileData, string(retrievedFileBuffer))
-
-	tempFile.Close()
-	defer (func() {
-		err := os.Remove(tempLocation)
-		fmt.Println(err)
-	})()
+	assert.Equal(t, fileData, retrievedFileBuffer)
 }

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"os"
 	"testing"
 	"time"
 
@@ -13,14 +12,14 @@ func TestFragmentDBInterface(t *testing.T) {
 	defer teardown()
 
 	t.Run("TestWriteFragment", func(t *testing.T) {
-		frag := Fragment{"1", "user", time.Now(), time.Now(), "testType", 1, "testFragment.txt"}
+		frag := Fragment{"1", "user", time.Now(), time.Now(), "testType", 1}
 		assert.Equal(t, true, WriteFragment(&frag))
 	})
 
 	t.Run("TestReadFragmentSuccess", func(t *testing.T) {
 		userId := "user"
 		fragmentId := "1"
-		frag := Fragment{fragmentId, userId, time.Now(), time.Now(), "testType", 1, "testFragment.txt"}
+		frag := Fragment{fragmentId, userId, time.Now(), time.Now(), "testType", 1}
 		ok := assert.Equal(t, true, WriteFragment(&frag))
 		if !ok {
 			t.Error("Failed to create fragment")
@@ -38,44 +37,26 @@ func TestFragmentDBInterface(t *testing.T) {
 	t.Run("TestWriteFragmentData", func(t *testing.T) {
 		userId := "user"
 		fragmentId := "1"
-		tempFile, _ := os.CreateTemp("", "*")
-		defer os.Remove(tempFile.Name())
-		if _, err := tempFile.Write([]byte("Example File")); err != nil {
-			t.Error("Failed to write into temp file")
-			return
-		}
-		ok := WriteFragmentData(userId, fragmentId, tempFile)
+		ok := WriteFragmentData(userId, fragmentId, []byte("Sample data"))
 		assert.Equal(t, true, ok)
 	})
 
 	t.Run("TestReadFragmentData", func(t *testing.T) {
 		userId := "user"
 		fragmentId := "1"
-		tempFile, _ := os.CreateTemp("", "*")
-		defer os.Remove(tempFile.Name())
-		ok := WriteFragmentData(userId, fragmentId, tempFile)
-		if !ok {
-			t.Error("Failed to write fragment data")
-			return
+		data := []byte("Sample data")
+		if ok := WriteFragmentData(userId, fragmentId, data); !ok {
+			t.Error("Failed to write user fragment")
 		}
-		_, ok = ReadFragmentData(userId, fragmentId)
-		assert.Equal(t, true, ok)
+		retrievedData, ok := ReadFragmentData(userId, fragmentId)
+		assert.Equal(t, ok, true)
+		assert.Equal(t, data, retrievedData)
 	})
 
 	t.Run("TestDeleteFragmentDB", func(t *testing.T) {
 		frag := CreateTestFragment()
-		ok := WriteFragment(&frag)
-		if !ok {
-			t.Error("Failed to create fragment")
-			return
-		}
-		tempFile, _ := os.CreateTemp("", "*")
-		defer os.Remove(tempFile.Name())
-		if _, err := tempFile.Write([]byte("Sample data")); err != nil {
-			t.Error("Failed to write into temp file")
-			return
-		}
-		ok = WriteFragmentData(frag.OwnerId, frag.Id, tempFile)
+		data := []byte("Sample data")
+		ok := WriteFragmentData(frag.OwnerId, frag.Id, data)
 		if !ok {
 			t.Error("Failed to write fragment data")
 			return

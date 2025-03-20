@@ -10,11 +10,11 @@ import (
 	cognitoJwtVerify "github.com/jhosan7/cognito-jwt-verify"
 )
 
-func GetBody(bodyBytes []byte) map[string]string {
-	var jsonMap map[string]string
+func GetBody(bodyBytes []byte) map[string]interface{} {
+	var jsonMap map[string]interface{}
 	err := json.Unmarshal(bodyBytes, &jsonMap)
 	if err != nil {
-		log.Print("Failed to retrieve json values")
+		log.Fatal(err)
 	}
 	return jsonMap
 }

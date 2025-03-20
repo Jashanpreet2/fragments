@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"mime/multipart"
 )
 
 var fragmentDB localdb
@@ -25,20 +24,20 @@ func ReadFragment(userid string, fragment_id string) (Fragment, bool) {
 	return Fragment{}, false
 }
 
-func WriteFragmentData(userid string, fragment_id string, data multipart.File) bool {
+func WriteFragmentData(userid string, fragment_id string, data []byte) bool {
 	dataDB.Put(userid, fragment_id, data)
 	return true
 }
 
-func ReadFragmentData(userid string, fragment_id string) (multipart.File, bool) {
+func ReadFragmentData(userid string, fragment_id string) ([]byte, bool) {
 	fragmentData, ok := dataDB.GetValue(userid, fragment_id)
 	if !ok {
 		sugar.Infof("Failed to find fragment data for User ID: %s and Fragment ID: %s", userid, fragment_id)
 		return nil, false
 	}
-	fragment_file, ok := fragmentData.(multipart.File)
+	fragment_file, ok := fragmentData.([]byte)
 	if !ok {
-		sugar.Infof("Fragment data not of type multipart.File for User ID: %s and Fragment ID: %s", userid, fragment_id)
+		sugar.Infof("Fragment data not of type []byte for User ID: %s and Fragment ID: %s", userid, fragment_id)
 		return nil, false
 	}
 	return fragment_file, true

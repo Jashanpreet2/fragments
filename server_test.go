@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -14,6 +15,23 @@ import (
 
 	"github.com/stretchr/testify/assert"
 )
+
+type fragmentMetadata struct {
+	Id           string
+	OwnerId      string
+	Created      string
+	Updated      string
+	FragmentType string
+	Size         int
+	FragmnetName string
+}
+
+type PostFragmentResponse struct {
+	Location string
+	message  string
+	metadata fragmentMetadata
+	status   string
+}
 
 func TestHealthCheck(t *testing.T) {
 	setup := PreTestSetup()
@@ -203,12 +221,13 @@ func TestGetFragment(t *testing.T) {
 
 	r := getRouter()
 	r.ServeHTTP(w, req)
-	fmt.Println(GetBody(w.Body.Bytes()))
-	location := GetBody(w.Body.Bytes())["Location"]
+	var res PostFragmentResponse
+	json.Unmarshal(w.Body.Bytes(), &res)
+	fmt.Println(res)
 
 	w = httptest.NewRecorder()
-	fmt.Println("Location: ", location)
-	getReq, _ := http.NewRequest("GET", location, nil)
+	fmt.Println("Location: ", res.Location)
+	getReq, _ := http.NewRequest("GET", res.Location, nil)
 	getReq.SetBasicAuth("user1@email.com", "password1")
 	r.ServeHTTP(w, getReq)
 

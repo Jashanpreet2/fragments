@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"mime/multipart"
 	"slices"
 	"strings"
 	"time"
@@ -14,8 +13,7 @@ type Fragment struct {
 	Created      time.Time
 	Updated      time.Time
 	FragmentType string
-	Size         int64
-	FragmentName string
+	Size         int
 }
 
 func (frag *Fragment) GetJson() (string, bool) {
@@ -26,7 +24,7 @@ func (frag *Fragment) GetJson() (string, bool) {
 	return string(jsonData), true
 }
 
-func (frag *Fragment) GetData() (multipart.File, bool) {
+func (frag *Fragment) GetData() ([]byte, bool) {
 	file, ok := ReadFragmentData(frag.OwnerId, frag.Id)
 	if !ok {
 		sugar.Errorf("Failed to find data for the current fragment at userid: %s and fragment_id: %s", frag.OwnerId, frag.Id)
@@ -35,7 +33,7 @@ func (frag *Fragment) GetData() (multipart.File, bool) {
 	return file, true
 }
 
-func (frag *Fragment) SetData(data multipart.File) bool {
+func (frag *Fragment) SetData(data []byte) bool {
 	frag.Updated = time.Now()
 	WriteFragment(frag)
 	return WriteFragmentData(frag.OwnerId, frag.Id, data) && WriteFragment(frag)
@@ -62,7 +60,11 @@ func GetUserFragmentIds(username string) []string {
 }
 
 func GetFragment(username string, fragment_id string) (Fragment, bool) {
-	return ReadFragment(username, fragment_id)
+	fragment, ok := ReadFragment(username, fragment_id)
+	if !ok {
+		sugar.Info("Unable to find the specified fragment. Previously this error was encountered when the username wasn't hashed")
+	}
+	return fragment, ok
 }
 
 func DeleteFragment(username string, fragment_id string) bool {

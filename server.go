@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
@@ -113,7 +112,9 @@ func authenticate() gin.HandlerFunc {
 			sugar.Info("Local authentication using information from CSV files.")
 			req := c.Request
 			if username, password, ok := req.BasicAuth(); ok {
+				sugar.Info("Ok so far")
 				if localauthentication.AuthenticateTestProfile(os.Getenv("TEST_PROFILE_PATH"), username, password) {
+					c.Set("username", username)
 					c.Next()
 				} else {
 					c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid details"})
@@ -181,6 +182,7 @@ func authenticate() gin.HandlerFunc {
 					c.Abort()
 				}
 				sugar.Info(v["cognito:username"])
+				c.Set("username", v["cognito:username"])
 				c.Next()
 			}
 		}
@@ -205,9 +207,11 @@ func getRouter() *gin.Engine {
 
 	v1 := r.Group("v1")
 	v1.Use(authenticate())
+
 	v1.GET("/fragments", func(c *gin.Context) {
-		username, ok := GetUsername(c, localCsvAuthentication)
-		if !ok {
+		username := c.GetString("username")
+		sugar.Info(username)
+		if username == "" {
 			sugar.Info("Request passed through authentication but still failed to retrieve the username")
 			c.JSON(http.StatusBadRequest, gin.H{"message": "Failed to parse username"})
 		}
@@ -231,39 +235,23 @@ func getRouter() *gin.Engine {
 		c.JSON(http.StatusOK, gin.H{"status": "ok", "fragment_ids": fragmentIds})
 	})
 	v1.POST("/fragments", func(c *gin.Context) {
-		fileHeader, err := c.FormFile("file")
+		fileData, err := c.GetRawData()
 		if err != nil {
 			sugar.Info(err)
+			c.JSON(http.StatusBadRequest, gin.H{"message": "Unable to retrieve file data from the request body!"})
 		}
-		username, ok := GetUsername(c, localCsvAuthentication)
-		if !ok {
-			sugar.Error("Failed to parse username!")
-			c.JSON(http.StatusBadRequest, gin.H{"message": "Failed to parse username"})
-			return
-		}
-		file, err := fileHeader.Open()
-		if err != nil {
-			sugar.Error("Failed to read file!")
-		}
+		username := c.GetString("username")
 		fragment_id := GenerateID(username)
-		fileData := make([]byte, 512)
-		if _, err := file.Read(fileData); err != nil {
-			sugar.Error("Failed to read user file")
-			c.JSON(http.StatusBadRequest, gin.H{"message": "Unable to process the uploaded file"})
-		}
-		if _, err := file.Seek(0, 0); err != nil {
-			sugar.Error("Failed to seek file back to the start")
-			c.JSON(http.StatusBadRequest, gin.H{"message": "Server failed in processing the file"})
-		}
 		sugar.Info("DATAA:", string(fileData))
-		fragmentType := fileHeader.Header.Get("Content-Type")
+		fragmentType := c.GetHeader("Content-Type")
 		if !IsSupportedType(fragmentType) {
 			c.JSON(http.StatusBadRequest, gin.H{"message": "The specified file format is currently not supported!"})
 			sugar.Infof("User tried to store fragment of type %s", fragmentType)
 			return
 		}
-		fragment := Fragment{strconv.Itoa(fragment_id), hashing.HashString(username), time.Now(), time.Now(), fragmentType, fileHeader.Size, fileHeader.Filename}
-		fragment.SetData(file)
+		fragment := Fragment{strconv.Itoa(fragment_id), hashing.HashString(username), time.Now(), time.Now(), fragmentType, len(fileData)}
+		fragment.SetData(fileData)
+		sugar.Infof("File data being saved: %s", fileData)
 		fragment.Save()
 
 		scheme := "http://"
@@ -274,39 +262,40 @@ func getRouter() *gin.Engine {
 		c.JSON(http.StatusOK, gin.H{"status": "ok", "message": "Fragment has successfully been saved",
 			"Location": scheme + c.Request.Host + fmt.Sprintf("/v1/fragment/%s", fragment.Id),
 			"metadata": fragment})
+		// c.JSON(http.StatusOK, gin.H{"abc": "asja"})
+		c.Abort()
 	})
 	v1.GET("/fragment/:id", func(c *gin.Context) {
-		sugar.Infof("Request to fetch fragments. User ID: %s. Fragment_id: %s", c.Query("userid"), c.Query("fragment_id"))
 		fragment_id := c.Param("id")
-		userid, _ := GetUsername(c, localCsvAuthentication)
-		fragment, ok := GetFragment(hashing.HashString(userid), fragment_id)
+		username := c.GetString("username")
+		sugar.Infof("Request to fetch fragments. User ID: %s. Fragment_id: %s", username, fragment_id)
+		fragment, ok := GetFragment(hashing.HashString(username), fragment_id)
 		if !ok {
 			c.JSON(http.StatusBadRequest, gin.H{"message": "Failed to find fragments with " +
 				"the specified user id and fragment_id"})
 			sugar.Error("Failed to find user's fragments. Check if the username was hashed successfully")
 			return
 		}
-		file, ok := fragment.GetData()
+		fileData, ok := fragment.GetData()
 		if !ok {
 			c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to find the fragment data"})
 			return
 		}
-		pwd, err := os.Getwd()
-		if err != nil {
-			sugar.Info(err)
-		}
-		new_file, err := os.Create(filepath.Join(pwd, "tmp"+filepath.Base(fragment.FragmentName)))
-		if err != nil {
-			sugar.Info(err)
-			c.JSON(http.StatusInternalServerError, gin.H{"message": "Server failed to send file"})
+		sugar.Info("Data in file: ", string(fileData))
+		c.Header("Content-Length", strconv.Itoa(len(fileData)))
+		c.Data(200, fragment.MimeType(), fileData)
+	})
+
+	v1.GET("/fragment/:id/info", func(c *gin.Context) {
+		id := c.Param("id")
+
+		fragment, ok := GetFragment(hashing.HashString(c.GetString("username")), id)
+		if !ok {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "Unable to find the specified fragment!"})
 			return
 		}
-		fmt.Println("filepath", new_file.Name())
-		io.Copy(new_file, file)
-		c.FileAttachment(new_file.Name(), fragment.FragmentName)
 
-		new_file.Close()
-		os.Remove(new_file.Name())
+		c.JSON(http.StatusOK, gin.H{"status": "ok", "fragment": fragment})
 	})
 
 	return r

@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -21,20 +20,17 @@ func TestFragment(t *testing.T) {
 
 	t.Run("TestSetData", func(t *testing.T) {
 		frag := CreateTestFragment()
-		tempFile, _ := os.CreateTemp("", "*")
-		defer os.Remove(tempFile.Name())
-		ok := frag.SetData(tempFile)
+		ok := frag.SetData([]byte("Sample data"))
 		assert.Equal(t, true, ok)
 	})
 
 	t.Run("TestGetData", func(t *testing.T) {
 		frag := CreateTestFragment()
-		tempFile, _ := os.CreateTemp("", "*")
-		defer os.Remove(tempFile.Name())
-		frag.SetData(tempFile)
+		data := []byte("Sample data")
+		frag.SetData(data)
 		retrievedData, ok := frag.GetData()
 		assert.Equal(t, true, ok)
-		assert.Equal(t, retrievedData, tempFile)
+		assert.Equal(t, retrievedData, data)
 	})
 
 	t.Run("TestGetUserFragmentIds", func(t *testing.T) {

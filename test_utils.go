@@ -14,5 +14,5 @@ func PreTestSetup() func() {
 }
 
 func CreateTestFragment() Fragment {
-	return Fragment{"1", "user", time.Now(), time.Now(), "text", 5, "test fragment.type"}
+	return Fragment{"1", "user", time.Now(), time.Now(), "text", 5}
 }

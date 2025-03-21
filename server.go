@@ -267,6 +267,14 @@ func getRouter() *gin.Engine {
 	})
 	v1.GET("/fragment/:id", func(c *gin.Context) {
 		fragment_id := c.Param("id")
+		var ext string
+		for i := len(fragment_id) - 1; i > 0; i-- {
+			if fragment_id[i] == '.' {
+				ext = fragment_id[i:]
+				fragment_id = fragment_id[0:i]
+				break
+			}
+		}
 		username := c.GetString("username")
 		sugar.Infof("Request to fetch fragments. User ID: %s. Fragment_id: %s", username, fragment_id)
 		fragment, ok := GetFragment(hashing.HashString(username), fragment_id)

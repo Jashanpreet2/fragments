@@ -1,10 +1,5 @@
 package main
 
-import (
-	"io"
-	"mime/multipart"
-)
-
 type localdb struct {
 	db_map map[string]map[string]any
 }
@@ -37,14 +32,6 @@ func (db *localdb) GetValue(pk string, sk string) (any, bool) {
 	sugar.Info("Finding a value in the following map:")
 	sugar.Info(db.db_map)
 	if db.db_map[pk] != nil && db.db_map[pk][sk] != nil {
-		// Delete
-		sugar.Info("Fragment data stored in db: ", db.db_map[pk][sk])
-		if file, ok := db.db_map[pk][sk].(multipart.File); ok {
-			file.Seek(0, 0)
-			data, _ := io.ReadAll(file)
-			sugar.Info("Value in memoryDB: ", string(data))
-		}
-		//
 		return db.db_map[pk][sk], true
 	}
 	return nil, false

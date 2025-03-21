@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
+	"mime"
 	"slices"
 	"strings"
 	"time"
@@ -45,6 +47,27 @@ func (frag *Fragment) Save() bool {
 
 func (frag *Fragment) MimeType() string {
 	return strings.Split(frag.FragmentType, ";")[0]
+}
+
+func (frag *Fragment) ConvertMimetype(ext string) ([]byte, string, error) {
+	data, ok := frag.GetData()
+	mime.AddExtensionType(".md", "text/markdown")
+	mime.AddExtensionType(".markdown", "text/markdown")
+	mimeType := strings.Split(mime.TypeByExtension(ext), ";")[0]
+	if mimeType == "" {
+		return nil, "", errors.New("extension doesn't exist")
+	}
+	if !ok {
+		sugar.Error("Failed to get fragment data")
+		return nil, "", errors.New("unable to retrieve data")
+	}
+	if frag.MimeType() == "text/markdown" {
+		sugar.Info(mimeType)
+		if mimeType == "text/html" {
+			return ConvertMdToHtml(data), "text/markdown", nil
+		}
+	}
+	return nil, "", errors.New("unsupported extension")
 }
 
 func (frag *Fragment) Formats() []string {

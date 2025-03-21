@@ -283,14 +283,27 @@ func getRouter() *gin.Engine {
 			sugar.Error("Failed to find user's fragments. Check if the username was hashed successfully")
 			return
 		}
-		fileData, ok := fragment.GetData()
-		if !ok {
-			c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to find the fragment data"})
-			return
+		var err error
+		var fileData []byte
+		var mimeType string
+		if ext == "" {
+			fileData, ok = fragment.GetData()
+			mimeType = fragment.MimeType()
+			if !ok {
+				sugar.Info("Failed to find the fragment")
+				c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to find the fragment data"})
+				return
+			}
+		} else {
+			fileData, mimeType, err = fragment.ConvertMimetype(ext)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+				return
+			}
 		}
 		sugar.Info("Data in file: ", string(fileData))
 		c.Header("Content-Length", strconv.Itoa(len(fileData)))
-		c.Data(200, fragment.MimeType(), fileData)
+		c.Data(200, mimeType, fileData)
 	})
 
 	v1.GET("/fragment/:id/info", func(c *gin.Context) {

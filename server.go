@@ -327,8 +327,6 @@ func main() {
 
 	Initialize()
 
-	fmt.Println(filepath.Join("files", "aja"))
-
 	// Start server
 	port := os.Getenv("PORT")
 	r := getRouter()

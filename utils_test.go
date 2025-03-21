@@ -23,3 +23,19 @@ func CreateTestFragment() Fragment {
 	return Fragment{"1", "user", time.Now(), time.Now(), "text", 5}
 }
 
+func PostFragment(r *gin.Engine, data []byte, mimeType string, username string, password string) PostFragmentResponse {
+	// Set up and make request
+	w := httptest.NewRecorder()
+	fileData := []byte(data)
+
+	req, _ := http.NewRequest("POST", "/v1/fragments", bytes.NewReader(fileData))
+	req.Header.Add("Content-Type", mimeType)
+	req.SetBasicAuth(username, password)
+
+	r.ServeHTTP(w, req)
+
+	var res PostFragmentResponse
+	json.Unmarshal(w.Body.Bytes(), &res)
+
+	return res
+}

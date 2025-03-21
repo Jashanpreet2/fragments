@@ -8,6 +8,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 	cognitoJwtVerify "github.com/jhosan7/cognito-jwt-verify"
+
+	"github.com/gomarkdown/markdown"
+	"github.com/gomarkdown/markdown/html"
+	"github.com/gomarkdown/markdown/parser"
 )
 
 func GetBody(bodyBytes []byte) map[string]interface{} {
@@ -64,4 +68,15 @@ func GetUsername(c *gin.Context, local bool) (string, bool) {
 		json.Unmarshal(jsonData, &v)
 		return v["cognito:username"], true
 	}
+}
+
+func ConvertMdToHtml(data []byte) []byte {
+	extensions := parser.CommonExtensions
+	p := parser.NewWithExtensions(extensions)
+	doc := p.Parse(data)
+
+	htmlFlags := html.CommonFlags
+	opts := html.RendererOptions{Flags: htmlFlags}
+	htmlRenderer := html.NewRenderer(opts)
+	return markdown.Render(doc, htmlRenderer)
 }

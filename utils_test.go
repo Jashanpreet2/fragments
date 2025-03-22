@@ -25,7 +25,7 @@ func PreTestSetup(mode string) func() {
 	}
 	Initialize()
 	return func() {
-		// Might have some test teardown logic later on
+		ResetDB()
 	}
 }
 

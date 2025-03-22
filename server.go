@@ -43,7 +43,7 @@ func Initialize() {
 	var err error
 	if mode == "debug" {
 		err = godotenv.Load(".env.debug")
-	} else if mode == "prod" {
+	} else if mode == "prod" && os.Getenv("GITHUB_ACTIONS") != "true" {
 		err = godotenv.Load(".env.prod")
 	} else {
 		sugar.Fatal("Mode is neither debug nor prod. Ensure that the correct mode was passed when starting the application.")
@@ -62,10 +62,6 @@ func Initialize() {
 	// Check that the necessary environment variables are present
 	if os.Getenv("AWS_COGNITO_POOL_ID") == "" && os.Getenv("AWS_COGNITO_CLIENT_ID") == "" && !localCsvAuthentication {
 		sugar.Fatal("Unable to find AWS_COGNITO_POOL_ID and AWS_COGNITO_CLIENT_ID")
-	}
-
-	if os.Getenv("AWS_COGNITO_POOL_ID") != "" && os.Getenv("AWS_COGNITO_CLIENT_ID") != "" && localCsvAuthentication {
-		sugar.Fatal("Found both development and production environment variables")
 	}
 }
 

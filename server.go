@@ -172,7 +172,6 @@ func authenticate() gin.HandlerFunc {
 					return
 				}
 
-				sugar.Info(jsonData)
 				var v map[string]any
 				if err := json.Unmarshal(jsonData, &v); err != nil {
 					c.JSON(http.StatusBadRequest, gin.H{"message": "Unable to process request"})
@@ -209,14 +208,16 @@ func getRouter() *gin.Engine {
 
 	v1.GET("/fragments", func(c *gin.Context) {
 		username := c.GetString("username")
+		sugar.Info("Content type: ", c.GetHeader("Content-Type"))
 		sugar.Info(username)
 		if username == "" {
 			sugar.Info("Request passed through authentication but still failed to retrieve the username")
 			c.JSON(http.StatusBadRequest, gin.H{"message": "Failed to parse username"})
 		}
 		fragmentIds := GetUserFragmentIds(hashing.HashString(username))
+
 		if c.Query("expand") == "1" {
-			var fragments []Fragment
+			fragments := []Fragment{}
 			for _, fragmentId := range fragmentIds {
 				fragment, found := GetFragment(hashing.HashString(username), fragmentId)
 				if !found {

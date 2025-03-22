@@ -260,6 +260,34 @@ func TestGetFragment(t *testing.T) {
 	assert.Equal(t, fileData, retrievedFileBuffer)
 }
 
+func TestGetNonExistentFragment(t *testing.T) {
+	setup := PreTestSetup("debug")
+	defer setup()
+
+	r := getRouter()
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/v1/fragment/invalidid", nil)
+	req.SetBasicAuth("user1@email.com", "password1")
+	r.ServeHTTP(w, req)
+	fmt.Print("Getting non fragment", w.Result().StatusCode)
+	assert.Equal(t, 404, w.Result().StatusCode)
+}
+
+func TestGetNonExistentFragmentInfo(t *testing.T) {
+	setup := PreTestSetup("debug")
+	defer setup()
+
+	r := getRouter()
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/v1/fragment/invalidid/info", nil)
+	req.SetBasicAuth("user1@email.com", "password1")
+	r.ServeHTTP(w, req)
+	fmt.Print("Getting non fragment", w.Result().StatusCode)
+	assert.Equal(t, 404, w.Result().StatusCode)
+}
+
 func TestGetFragmentInfo(t *testing.T) {
 	setup := PreTestSetup("debug")
 	defer setup()
@@ -308,6 +336,75 @@ func TestGetConvertedFragment(t *testing.T) {
 
 	assert.Equal(t, []byte("<h3>Hello!</h3>\n"), retrievedFileData)
 }
+
+func TestGetConvertedFragmentInvalidExtension(t *testing.T) {
+	setup := PreTestSetup("debug")
+	defer setup()
+
+	r := getRouter()
+	fileData := []byte("### Hello!\n")
+	mimeType := "text/markdown"
+	username := "user1@email.com"
+	password := "password1"
+
+	res := PostFragment(r, fileData, mimeType, username, password)
+
+	w := httptest.NewRecorder()
+	fmt.Println("Location: ", res.Location)
+	getReq, _ := http.NewRequest("GET", res.Location+".invalidextension", nil)
+	getReq.SetBasicAuth("user1@email.com", "password1")
+	r.ServeHTTP(w, getReq)
+
+	assert.Equal(t, http.StatusBadRequest, w.Result().StatusCode)
+}
+
+func TestAwsAuthenticationValidAuthorization(t *testing.T) {
+	setup := PreTestSetup("prod")
+	defer setup()
+
+	r := getRouter()
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/v1/fragments", nil)
+	req.Header.Add("Authorization", "Bearer eyJraWQiOiJIYUFZbXFiUUlJXC8xanpRYUczcUswdjdlQnhiNU02SFwvSlZMRVJZY3I4Q2s9IiwiYWxnIjoiUlMyNTYifQ.eyJhdF9oYXNoIjoiX3ZIcHdfdlA0U0hmM0M4SlpLd3ltdyIsInN1YiI6IjQ0Nzg2NDU4LTIwNjEtNzA0OC05YWFlLWE5Mzg3Njk1NmQ2NSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJpc3MiOiJodHRwczpcL1wvY29nbml0by1pZHAudXMtZWFzdC0xLmFtYXpvbmF3cy5jb21cL3VzLWVhc3QtMV9Fck9GZlhuWDQiLCJjb2duaXRvOnVzZXJuYW1lIjoiamFzaGFuMSIsIm9yaWdpbl9qdGkiOiI0OTA4MTg4ZS1hZTg4LTRhY2UtOWRlZS1lNTlkMDczM2NkOGIiLCJhdWQiOiI1cWlndHU3NmF1MnM1cjM5bjI0amh0c3Y2IiwiZXZlbnRfaWQiOiI1ZmIyODA4OC0zZTJjLTRlZjAtOWJlNS0wOWZlZjk2OTc3MjkiLCJ0b2tlbl91c2UiOiJpZCIsImF1dGhfdGltZSI6MTc0MjYyNTUwNiwiZXhwIjoxNzQyNjI5MTA2LCJpYXQiOjE3NDI2MjU1MDYsImp0aSI6IjMyOWJkM2ZlLTM1NmQtNDk3MC1hZWRjLWU1NzgxZGU0M2VhNyIsImVtYWlsIjoianNpbmdoMTAwOUBteXNlbmVjYS5jYSJ9.ReiBSMN2qECNUhPw6koR9YbPgZJQ4yy3V7eaIL8QyUN5Hzzfbtqq3Forp5jU_B3QfQcJTgas6kcZNI_tVqNCOWFwQXEZOwNCMPfmHsZlP9y5Ept3U0W1ARO1CNtDVcsuaGZK4S4XXkI0fe5v0eb9nCFc27-UELRunRVepNlxqul4YF4I1fhDqgT0K_b0llSQVAYJ2hPHR5NtkHdbLrVgDCywvP_cRbLp8niAAnhta4Es5wjnRsNU3p0_8Ip-PPV7pJJJDjDm79Iw21aMCyw6XUAmtU0rGxpiqnsmr5AwfstttCLUR9_V0uJSAD7diILdaldvP4fqli0-1lGTbJYDkA")
+
+	r.ServeHTTP(w, req)
+	var response GetFragmentsResponse
+	json.Unmarshal(w.Body.Bytes(), &response)
+
+	assert.Equal(t, "ok", response.Status)
+}
+
+func TestAwsAuthenticationEmptyToken(t *testing.T) {
+	setup := PreTestSetup("prod")
+	defer setup()
+
+	r := getRouter()
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/v1/fragments", nil)
+	req.Header.Add("Authorization", "Bearer ")
+
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, 401, w.Result().StatusCode)
+}
+
+func TestAwsAuthenticationInvalidAuthorization(t *testing.T) {
+	setup := PreTestSetup("prod")
+	defer setup()
+
+	r := getRouter()
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/v1/fragments", nil)
+	req.Header.Add("Authorization", "Bearer Invalid bearer token")
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, 401, w.Result().StatusCode)
+
+}
+
 func TestAwsAuthenticationEmptyAuthorizationHeader(t *testing.T) {
 	setup := PreTestSetup("prod")
 	defer setup()
@@ -321,4 +418,28 @@ func TestAwsAuthenticationEmptyAuthorizationHeader(t *testing.T) {
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, 401, w.Result().StatusCode)
+}
+
+func TestPostInvalidMimetypeFragment(t *testing.T) {
+	setup := PreTestSetup("debug")
+	defer setup()
+
+	// Set up and make request
+	w := httptest.NewRecorder()
+
+	fileData := []byte("Some test data in the file!")
+
+	req, _ := http.NewRequest("POST", "/v1/fragments", bytes.NewReader(fileData))
+
+	// Invalid mime-type
+	req.Header.Add("Content-Type", "invalid/invalid")
+	req.SetBasicAuth("user1@email.com", "password1")
+
+	r := getRouter()
+	r.ServeHTTP(w, req)
+
+	fmt.Println(GetBody(w.Body.Bytes()))
+
+	// Assert
+	assert.Equal(t, 400, w.Result().StatusCode)
 }

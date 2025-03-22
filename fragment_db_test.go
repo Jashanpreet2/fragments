@@ -88,4 +88,25 @@ func TestFragmentDBInterface(t *testing.T) {
 	t.Run("TestGenerateID", func(t *testing.T) {
 		assert.Equal(t, 0, GenerateID("Non-existent user"))
 	})
+
+	t.Run("TestReadFragmentDataFails", func(t *testing.T) {
+		_, ok := ReadFragmentData("NonExistentUser", "NonExistentId")
+		assert.Equal(t, false, ok)
+	})
+
+	t.Run("TestDeleteFragmentDbDataDoesn'tExist", func(t *testing.T) {
+		ResetDB()
+		fragment := CreateTestFragment()
+		WriteFragment(&fragment)
+		ok := DeleteFragmentDB(fragment.OwnerId, fragment.Id)
+		assert.Equal(t, false, ok)
+	})
+
+	t.Run("TestDeleteFragmentDbFragmentDoesn'tExist", func(t *testing.T) {
+		ResetDB()
+		fragment := CreateTestFragment()
+		WriteFragmentData(fragment.OwnerId, fragment.Id, []byte("Some data"))
+		ok := DeleteFragmentDB(fragment.OwnerId, fragment.Id)
+		assert.Equal(t, false, ok)
+	})
 }

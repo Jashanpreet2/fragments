@@ -135,7 +135,7 @@ func authenticate() gin.HandlerFunc {
 				token := c.GetHeader("Authorization")
 
 				if !strings.HasPrefix(token, "Bearer ") {
-					c.JSON(http.StatusBadRequest, gin.H{"message": "Unable to login"})
+					c.JSON(http.StatusUnauthorized, gin.H{"message": "Unable to login"})
 					c.Abort()
 					return
 				}
@@ -279,7 +279,7 @@ func getRouter() *gin.Engine {
 		sugar.Infof("Request to fetch fragments. User ID: %s. Fragment_id: %s", username, fragment_id)
 		fragment, ok := GetFragment(hashing.HashString(username), fragment_id)
 		if !ok {
-			c.JSON(http.StatusBadRequest, gin.H{"message": "Failed to find fragments with " +
+			c.JSON(http.StatusNotFound, gin.H{"message": "Failed to find fragments with " +
 				"the specified user id and fragment_id"})
 			sugar.Error("Failed to find user's fragments. Check if the username was hashed successfully")
 			return
@@ -312,7 +312,7 @@ func getRouter() *gin.Engine {
 
 		fragment, ok := GetFragment(hashing.HashString(c.GetString("username")), id)
 		if !ok {
-			c.JSON(http.StatusBadRequest, gin.H{"message": "Unable to find the specified fragment!"})
+			c.JSON(http.StatusNotFound, gin.H{"message": "Unable to find the specified fragment!"})
 			return
 		}
 

@@ -261,7 +261,7 @@ func TestGetFragment(t *testing.T) {
 }
 
 func TestGetFragmentInfo(t *testing.T) {
-	setup := PreTestSetup()
+	setup := PreTestSetup("debug")
 	defer setup()
 
 	r := getRouter()
@@ -307,4 +307,18 @@ func TestGetConvertedFragment(t *testing.T) {
 	retrievedFileData := w.Body.Bytes()
 
 	assert.Equal(t, []byte("<h3>Hello!</h3>\n"), retrievedFileData)
+}
+func TestAwsAuthenticationEmptyAuthorizationHeader(t *testing.T) {
+	setup := PreTestSetup("prod")
+	defer setup()
+
+	r := getRouter()
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/v1/fragments", nil)
+	req.Header.Add("Authorization", "")
+
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, 401, w.Result().StatusCode)
 }

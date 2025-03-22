@@ -45,7 +45,7 @@ func Initialize() {
 		err = godotenv.Load(".env.debug")
 	} else if mode == "prod" && os.Getenv("GITHUB_ACTIONS") != "true" {
 		err = godotenv.Load(".env.prod")
-	} else {
+	} else if os.Getenv("GITHUB_ACTIONS") != "true" {
 		sugar.Fatal("Mode is neither debug nor prod. Ensure that the correct mode was passed when starting the application.")
 	}
 

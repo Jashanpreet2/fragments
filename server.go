@@ -240,7 +240,7 @@ func getRouter() *gin.Engine {
 			sugar.Info(err)
 			c.JSON(http.StatusBadRequest, gin.H{"message": "Unable to retrieve file data from the request body!"})
 		}
-		username := c.GetString("username")
+		username := hashing.HashString(c.GetString("username"))
 		fragment_id := GenerateID(username)
 		sugar.Info("DATAA:", string(fileData))
 		fragmentType := c.GetHeader("Content-Type")
@@ -249,7 +249,7 @@ func getRouter() *gin.Engine {
 			sugar.Infof("User tried to store fragment of type %s", fragmentType)
 			return
 		}
-		fragment := Fragment{strconv.Itoa(fragment_id), hashing.HashString(username), time.Now(), time.Now(), fragmentType, len(fileData)}
+		fragment := Fragment{strconv.Itoa(fragment_id), username, time.Now(), time.Now(), fragmentType, len(fileData)}
 		fragment.SetData(fileData)
 		sugar.Infof("File data being saved: %s", fileData)
 		fragment.Save()

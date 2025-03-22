@@ -53,7 +53,7 @@ func TestFragmentDBInterface(t *testing.T) {
 		assert.Equal(t, data, retrievedData)
 	})
 
-	t.Run("TestDeleteFragmentDB", func(t *testing.T) {
+	t.Run("TestDeleteFragmentDb", func(t *testing.T) {
 		frag := CreateTestFragment()
 		data := []byte("Sample data")
 		ok := WriteFragmentData(frag.OwnerId, frag.Id, data)

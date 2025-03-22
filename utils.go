@@ -3,10 +3,6 @@ package main
 import (
 	"encoding/json"
 	"log"
-	"os"
-	"strings"
-
-	cognitoJwtVerify "github.com/jhosan7/cognito-jwt-verify"
 
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/html"

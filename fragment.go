@@ -71,8 +71,8 @@ func (frag *Fragment) ConvertMimetype(ext string) ([]byte, string, error) {
 
 func (frag *Fragment) Formats() []string {
 	mimeType := frag.MimeType()
-	if mimeType == "text/plain" {
-		return []string{"text/plain"}
+	if mimeType == "text/md" || mimeType == "text/markdown" {
+		return []string{"text/md", "text/markdown", "text/html"}
 	}
 	return []string{mimeType}
 }

@@ -41,11 +41,11 @@ func Initialize() {
 
 	// Load environment variables
 	var err error
-	if mode == "debug" {
+	if os.Getenv("TEST_PROFILE_PATH") == "" && mode == "debug" {
 		err = godotenv.Load(".env.debug")
-	} else if mode == "prod" && os.Getenv("GITHUB_ACTIONS") != "true" {
+	} else if os.Getenv("AWS_COGNITO_POOL_ID") == "" && os.Getenv("AWS_COGNITO_CLIENT_ID") == "" && mode == "prod" {
 		err = godotenv.Load(".env.prod")
-	} else if os.Getenv("GITHUB_ACTIONS") != "true" {
+	} else if os.Getenv("TEST_PROFILE_PATH") == "" && os.Getenv("AWS_COGNITO_POOL_ID") == "" && os.Getenv("AWS_COGNITO_CLIENT_ID") == "" {
 		sugar.Fatal("Mode is neither debug nor prod. Ensure that the correct mode was passed when starting the application.")
 	}
 
@@ -53,10 +53,10 @@ func Initialize() {
 		log.Fatal("Failed to load environment variables")
 	}
 
-	if os.Getenv("TEST_PROFILE_PATH") == "" {
-		localCsvAuthentication = false
-	} else {
+	if mode == "debug" {
 		localCsvAuthentication = true
+	} else {
+		localCsvAuthentication = false
 	}
 
 	// Check that the necessary environment variables are present

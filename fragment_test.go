@@ -57,4 +57,14 @@ func TestFragment(t *testing.T) {
 		frag := CreateTestFragment()
 		assert.Equal(t, true, frag.Save())
 	})
+
+	t.Run("TestFormatsForMd", func(t *testing.T) {
+		frag := CreateTestFragment()
+		frag.FragmentType = "text/md"
+		formats := frag.Formats()
+		assert.Equal(t, 3, len(formats))
+		assert.Contains(t, formats, "text/html")
+		assert.Contains(t, formats, "text/md")
+		assert.Contains(t, formats, "text/markdown")
+	})
 }

@@ -87,3 +87,8 @@ func ListFragmentMetadatas(userid string) []Fragment {
 	}
 	return fragments
 }
+
+func ResetDB() {
+	fragmentDB = localdb{}
+	dataDB = localdb{}
+}

@@ -278,6 +278,7 @@ func getRouter() *gin.Engine {
 		username := c.GetString("username")
 		sugar.Infof("Request to fetch fragments. User ID: %s. Fragment_id: %s", username, fragment_id)
 		fragment, ok := GetFragment(hashing.HashString(username), fragment_id)
+		sugar.Info("ok?", ok)
 		if !ok {
 			c.JSON(http.StatusNotFound, gin.H{"message": "Failed to find fragments with " +
 				"the specified user id and fragment_id"})

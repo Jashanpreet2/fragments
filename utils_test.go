@@ -14,7 +14,6 @@ import (
 var modeAdded = false
 
 func PreTestSetup(mode string) func() {
-	os.Unsetenv("TEST_PROFILE_PATH")
 	if !modeAdded {
 		os.Args = append(os.Args, mode)
 		modeAdded = true

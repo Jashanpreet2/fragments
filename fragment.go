@@ -58,7 +58,6 @@ func (frag *Fragment) ConvertMimetype(ext string) ([]byte, string, error) {
 		return nil, "", errors.New("extension doesn't exist")
 	}
 	if !ok {
-		sugar.Error("Failed to get fragment data")
 		return nil, "", errors.New("unable to retrieve data")
 	}
 	if frag.MimeType() == "text/markdown" {

@@ -67,4 +67,11 @@ func TestFragment(t *testing.T) {
 		assert.Contains(t, formats, "text/md")
 		assert.Contains(t, formats, "text/markdown")
 	})
+
+	t.Run("TestGetDataWithoutSavingData", func(t *testing.T) {
+		frag := CreateTestFragment()
+		data, ok := frag.GetData()
+		assert.Equal(t, []byte(nil), data)
+		assert.Equal(t, false, ok)
+	})
 }

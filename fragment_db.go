@@ -60,6 +60,7 @@ func DeleteFragmentDB(userid string, fragment_id string) bool {
 }
 
 func GenerateID(userid string) int {
+	// Make sure to hash the userid before passing it here else you will keep overriding the same fragment
 	return len(fragmentDB.GetSKs(userid))
 }
 

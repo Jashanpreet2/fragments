@@ -11,8 +11,18 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func PreTestSetup() func() {
-	os.Args = append(os.Args, "debug")
+var modeAdded = false
+
+func PreTestSetup(mode string) func() {
+	os.Unsetenv("TEST_PROFILE_PATH")
+	os.Unsetenv("AWS_COGNITO_POOL_ID")
+	os.Unsetenv("AWS_COGNITO_CLIENT_ID")
+	if !modeAdded {
+		os.Args = append(os.Args, mode)
+		modeAdded = true
+	} else {
+		os.Args[len(os.Args)-1] = mode
+	}
 	Initialize()
 	return func() {
 		// Might have some test teardown logic later on

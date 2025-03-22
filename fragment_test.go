@@ -8,7 +8,7 @@ import (
 )
 
 func TestFragment(t *testing.T) {
-	teardown := PreTestSetup()
+	teardown := PreTestSetup("debug")
 	defer teardown()
 
 	t.Run("TestGetJson", func(t *testing.T) {

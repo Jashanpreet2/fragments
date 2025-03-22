@@ -45,7 +45,7 @@ type GetFragmentsExpandedResponse struct {
 }
 
 func TestHealthCheck(t *testing.T) {
-	setup := PreTestSetup()
+	setup := PreTestSetup("debug")
 	defer setup()
 
 	// Set up and make request
@@ -59,7 +59,7 @@ func TestHealthCheck(t *testing.T) {
 }
 
 func TestCacheControlHeader(t *testing.T) {
-	setup := PreTestSetup()
+	setup := PreTestSetup("debug")
 	defer setup()
 
 	// Set up and make request
@@ -73,7 +73,7 @@ func TestCacheControlHeader(t *testing.T) {
 }
 
 func TestOkInResponse(t *testing.T) {
-	setup := PreTestSetup()
+	setup := PreTestSetup("debug")
 	defer setup()
 
 	// Set up and make request
@@ -96,7 +96,7 @@ func TestOkInResponse(t *testing.T) {
 }
 
 func TestBodyInformation(t *testing.T) {
-	setup := PreTestSetup()
+	setup := PreTestSetup("debug")
 	defer setup()
 
 	// Set up and make request
@@ -121,7 +121,7 @@ func TestBodyInformation(t *testing.T) {
 }
 
 func TestUnauthenticatedRequest(t *testing.T) {
-	setup := PreTestSetup()
+	setup := PreTestSetup("debug")
 	defer setup()
 
 	// Set up and make request
@@ -136,7 +136,7 @@ func TestUnauthenticatedRequest(t *testing.T) {
 }
 
 func TestIncorrectLoginCredentials(t *testing.T) {
-	setup := PreTestSetup()
+	setup := PreTestSetup("debug")
 	defer setup()
 
 	// Set up and make request
@@ -151,7 +151,7 @@ func TestIncorrectLoginCredentials(t *testing.T) {
 }
 
 func TestAuthenticatedUser(t *testing.T) {
-	setup := PreTestSetup()
+	setup := PreTestSetup("debug")
 	defer setup()
 
 	// Set up and make request
@@ -166,7 +166,7 @@ func TestAuthenticatedUser(t *testing.T) {
 }
 
 func TestPostFragment(t *testing.T) {
-	setup := PreTestSetup()
+	setup := PreTestSetup("debug")
 	defer setup()
 
 	// Set up and make request
@@ -188,7 +188,7 @@ func TestPostFragment(t *testing.T) {
 }
 
 func TestGetFragments(t *testing.T) {
-	setup := PreTestSetup()
+	setup := PreTestSetup("debug")
 	defer setup()
 
 	r := getRouter()
@@ -211,7 +211,7 @@ func TestGetFragments(t *testing.T) {
 }
 
 func TestGetFragmentsExpanded(t *testing.T) {
-	setup := PreTestSetup()
+	setup := PreTestSetup("debug")
 	defer setup()
 
 	r := getRouter()
@@ -234,7 +234,7 @@ func TestGetFragmentsExpanded(t *testing.T) {
 }
 
 func TestGetFragment(t *testing.T) {
-	setup := PreTestSetup()
+	setup := PreTestSetup("debug")
 	defer setup()
 
 	r := getRouter()
@@ -313,7 +313,7 @@ func TestGetFragmentInfo(t *testing.T) {
 }
 
 func TestGetConvertedFragment(t *testing.T) {
-	setup := PreTestSetup()
+	setup := PreTestSetup("debug")
 	defer setup()
 
 	r := getRouter()

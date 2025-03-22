@@ -8,7 +8,7 @@ import (
 )
 
 func TestFragmentDBInterface(t *testing.T) {
-	teardown := PreTestSetup()
+	teardown := PreTestSetup("debug")
 	defer teardown()
 
 	t.Run("TestWriteFragment", func(t *testing.T) {

@@ -7,7 +7,7 @@ import (
 )
 
 func TestMemoryDB(t *testing.T) {
-	teardown := PreTestSetup()
+	teardown := PreTestSetup("debug")
 	defer teardown()
 	t.Run("TestPutValue", func(t *testing.T) {
 		testDB := localdb{}

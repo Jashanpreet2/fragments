@@ -184,7 +184,7 @@ func TestPostFragment(t *testing.T) {
 	fmt.Println(GetBody(w.Body.Bytes()))
 
 	// Assert
-	assert.Equal(t, 200, w.Result().StatusCode)
+	assert.Equal(t, 201, w.Result().StatusCode)
 }
 
 func TestGetFragments(t *testing.T) {

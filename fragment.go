@@ -10,12 +10,12 @@ import (
 )
 
 type Fragment struct {
-	Id           string
-	OwnerId      string
-	Created      time.Time
-	Updated      time.Time
-	FragmentType string
-	Size         int
+	Id           string    `json:"id"`
+	OwnerId      string    `json:"ownerId"`
+	Created      time.Time `json:"created"`
+	Updated      time.Time `json:"updated"`
+	FragmentType string    `json:"fragmentType"`
+	Size         int       `json:"size"`
 }
 
 func (frag *Fragment) GetJson() (string, bool) {
@@ -46,7 +46,7 @@ func (frag *Fragment) Save() bool {
 }
 
 func (frag *Fragment) MimeType() string {
-	return strings.Split(frag.FragmentType, ";")[0]
+	return frag.FragmentType
 }
 
 func (frag *Fragment) ConvertMimetype(ext string) ([]byte, string, error) {

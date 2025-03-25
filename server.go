@@ -241,7 +241,7 @@ func getRouter() *gin.Engine {
 		sugar.Info("DATAA:", string(fileData))
 		fragmentType := c.GetHeader("Content-Type")
 		if !IsSupportedType(fragmentType) {
-			c.JSON(http.StatusBadRequest, gin.H{"message": "The specified file format is currently not supported!"})
+			c.JSON(http.StatusUnsupportedMediaType, gin.H{"message": "The specified file format is currently not supported!"})
 			sugar.Infof("User tried to store fragment of type %s", fragmentType)
 			return
 		}
@@ -255,9 +255,9 @@ func getRouter() *gin.Engine {
 			scheme = "https://"
 		}
 
-		c.JSON(http.StatusOK, gin.H{"status": "ok", "message": "Fragment has successfully been saved",
-			"Location": scheme + c.Request.Host + fmt.Sprintf("/v1/fragment/%s", fragment.Id),
-			"metadata": fragment})
+		c.Header("Location", scheme+c.Request.Host+fmt.Sprintf("/v1/fragment/%s", fragment.Id))
+		c.JSON(http.StatusCreated, gin.H{"status": "ok", "message": "Fragment has successfully been saved",
+			"fragment": fragment})
 		// c.JSON(http.StatusOK, gin.H{"abc": "asja"})
 		c.Abort()
 	})
@@ -281,6 +281,7 @@ func getRouter() *gin.Engine {
 			sugar.Error("Failed to find user's fragments. Check if the username was hashed successfully")
 			return
 		}
+		sugar.Info(fragment.MimeType())
 		var err error
 		var fileData []byte
 		var mimeType string

@@ -23,9 +23,8 @@ type FragmentMetadata struct {
 }
 
 type PostFragmentResponse struct {
-	Location string
 	Message  string
-	Metadata FragmentMetadata
+	Fragment FragmentMetadata
 	Status   string
 }
 
@@ -197,17 +196,19 @@ func TestGetFragments(t *testing.T) {
 	username := "user1@email.com"
 	password := "password1"
 
-	postFragmentResponse := PostFragment(r, fileData, mimeType, username, password)
+	w := PostFragment(r, fileData, mimeType, username, password)
+	var postFragmentResponse PostFragmentResponse
+	json.Unmarshal(w.Body.Bytes(), &postFragmentResponse)
 
-	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/v1/fragments", nil)
 	req.SetBasicAuth(username, password)
 
+	w = httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 	var response GetFragmentsResponse
 	json.Unmarshal(w.Body.Bytes(), &response)
 
-	assert.Equal(t, response.Fragment_ids[0], postFragmentResponse.Metadata.Id)
+	assert.Equal(t, response.Fragment_ids[0], postFragmentResponse.Fragment.Id)
 }
 
 func TestGetFragmentsExpanded(t *testing.T) {
@@ -220,17 +221,19 @@ func TestGetFragmentsExpanded(t *testing.T) {
 	username := "user1@email.com"
 	password := "password1"
 
-	postFragmentResponse := PostFragment(r, fileData, mimeType, username, password)
+	w := PostFragment(r, fileData, mimeType, username, password)
+	var postFragmentResponse PostFragmentResponse
+	json.Unmarshal(w.Body.Bytes(), &postFragmentResponse)
 
-	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/v1/fragments?expand=1", nil)
 	req.SetBasicAuth(username, password)
 
+	w = httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 	var response GetFragmentsExpandedResponse
 	json.Unmarshal(w.Body.Bytes(), &response)
 
-	assert.Equal(t, response.Fragments[0], postFragmentResponse.Metadata)
+	assert.Equal(t, response.Fragments[0], postFragmentResponse.Fragment)
 }
 
 func TestGetFragment(t *testing.T) {
@@ -243,12 +246,13 @@ func TestGetFragment(t *testing.T) {
 	username := "user1@email.com"
 	password := "password1"
 
-	res := PostFragment(r, fileData, mimeType, username, password)
+	w := PostFragment(r, fileData, mimeType, username, password)
+	location := w.Header().Get("Location")
 
-	w := httptest.NewRecorder()
-	fmt.Println("Location: ", res.Location)
-	getReq, _ := http.NewRequest("GET", res.Location, nil)
+	fmt.Println("Location: ", location)
+	getReq, _ := http.NewRequest("GET", location, nil)
 	getReq.SetBasicAuth("user1@email.com", "password1")
+	w = httptest.NewRecorder()
 	r.ServeHTTP(w, getReq)
 
 	size, _ := strconv.Atoi(w.Result().Header.Get("Content-Length"))
@@ -298,18 +302,21 @@ func TestGetFragmentInfo(t *testing.T) {
 	username := "user1@email.com"
 	password := "password1"
 
-	postFragmentResponse := PostFragment(r, fileData, mimeType, username, password)
+	w := PostFragment(r, fileData, mimeType, username, password)
+	var postFragmentResponse PostFragmentResponse
+	json.Unmarshal(w.Body.Bytes(), &postFragmentResponse)
+	location := w.Header().Get("Location")
 
-	w := httptest.NewRecorder()
-	fmt.Println("Location: ", postFragmentResponse.Location)
-	getReq, _ := http.NewRequest("GET", postFragmentResponse.Location+"/info", nil)
+	fmt.Println("Location: ", location)
+	getReq, _ := http.NewRequest("GET", location+"/info", nil)
 	getReq.SetBasicAuth("user1@email.com", "password1")
+	w = httptest.NewRecorder()
 	r.ServeHTTP(w, getReq)
 
 	var getFragmentInfoResponse GetFragmentInfoResponse
 	json.Unmarshal(w.Body.Bytes(), &getFragmentInfoResponse)
 
-	assert.Equal(t, postFragmentResponse.Metadata, getFragmentInfoResponse.Fragment)
+	assert.Equal(t, postFragmentResponse.Fragment, getFragmentInfoResponse.Fragment)
 }
 
 func TestGetConvertedFragment(t *testing.T) {
@@ -322,12 +329,12 @@ func TestGetConvertedFragment(t *testing.T) {
 	username := "user1@email.com"
 	password := "password1"
 
-	res := PostFragment(r, fileData, mimeType, username, password)
-
-	w := httptest.NewRecorder()
-	fmt.Println("Location: ", res.Location)
-	getReq, _ := http.NewRequest("GET", res.Location+".html", nil)
+	w := PostFragment(r, fileData, mimeType, username, password)
+	location := w.Header().Get("Location")
+	fmt.Println("Location: ", location)
+	getReq, _ := http.NewRequest("GET", location+".html", nil)
 	getReq.SetBasicAuth("user1@email.com", "password1")
+	w = httptest.NewRecorder()
 	r.ServeHTTP(w, getReq)
 
 	size, _ := strconv.Atoi(w.Result().Header.Get("Content-Length"))
@@ -347,12 +354,13 @@ func TestGetConvertedFragmentInvalidExtension(t *testing.T) {
 	username := "user1@email.com"
 	password := "password1"
 
-	res := PostFragment(r, fileData, mimeType, username, password)
+	w := PostFragment(r, fileData, mimeType, username, password)
+	location := w.Header().Get("Location")
 
-	w := httptest.NewRecorder()
-	fmt.Println("Location: ", res.Location)
-	getReq, _ := http.NewRequest("GET", res.Location+".invalidextension", nil)
+	fmt.Println("Location: ", w.Header().Get("Location"))
+	getReq, _ := http.NewRequest("GET", location+".invalidextension", nil)
 	getReq.SetBasicAuth("user1@email.com", "password1")
+	w = httptest.NewRecorder()
 	r.ServeHTTP(w, getReq)
 
 	assert.Equal(t, http.StatusBadRequest, w.Result().StatusCode)
@@ -366,7 +374,7 @@ func TestAwsAuthenticationValidAuthorization(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/v1/fragments", nil)
-	req.Header.Add("Authorization", "Bearer eyJraWQiOiJIYUFZbXFiUUlJXC8xanpRYUczcUswdjdlQnhiNU02SFwvSlZMRVJZY3I4Q2s9IiwiYWxnIjoiUlMyNTYifQ.eyJhdF9oYXNoIjoiVlM1cllqSzcwZU1nQ1hBR0pKOC1qQSIsInN1YiI6IjQ0Nzg2NDU4LTIwNjEtNzA0OC05YWFlLWE5Mzg3Njk1NmQ2NSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJpc3MiOiJodHRwczpcL1wvY29nbml0by1pZHAudXMtZWFzdC0xLmFtYXpvbmF3cy5jb21cL3VzLWVhc3QtMV9Fck9GZlhuWDQiLCJjb2duaXRvOnVzZXJuYW1lIjoiamFzaGFuMSIsIm9yaWdpbl9qdGkiOiI1ZjNmZjY0MS0yZDJlLTRhMGMtOTZiYy04ZGU2NzcwNTg1YmUiLCJhdWQiOiI1cWlndHU3NmF1MnM1cjM5bjI0amh0c3Y2IiwiZXZlbnRfaWQiOiI4MGU3MzcxYy1hMmIyLTRmOTYtYTJiYi0wZmM1NTVhY2ExMWQiLCJ0b2tlbl91c2UiOiJpZCIsImF1dGhfdGltZSI6MTc0MjYyOTM5NCwiZXhwIjoxNzQyNjMyOTk0LCJpYXQiOjE3NDI2MjkzOTQsImp0aSI6ImYyNjBlZjU3LThmZWEtNGU0Yy1hZTUzLTc3YjJkYmEwMTBlMCIsImVtYWlsIjoianNpbmdoMTAwOUBteXNlbmVjYS5jYSJ9.O_I-jXY1iH1seuYXak7M0fbi8q_6zfJDyxRaSjsYt9S_5j6GiOlXjzgRbiMdrQa5wEk7uvzX0uvP1cAxI9MRKLzj21pZVDs5twpNjOyNLz_ZeCdLf1Xb8pXX_nAYYM9W3j3xoKWWpwg3xqyPqZy9hqxkkuCb0fP9JCYYuDUy3bbAM-IrF_5ySBSKbZLxl4jgUIt0-fvrNJpO6wF7Lmkk80XVoRdjwYahRorGVrydKJ5EsFq25jkRKILsJg_LxcKVg8BqwpopzGI79jZT20EPDOvTeNRX8xWqY9U-Dv80XzbWZMCxNuVxq9chqIHNtVzinYfTpN8k6CLCM4DxaK9mWA")
+	req.Header.Add("Authorization", "Bearer eyJraWQiOiJIYUFZbXFiUUlJXC8xanpRYUczcUswdjdlQnhiNU02SFwvSlZMRVJZY3I4Q2s9IiwiYWxnIjoiUlMyNTYifQ.eyJhdF9oYXNoIjoia3p3UmJOejA3N1RfaXRZeFRVQ0ozQSIsInN1YiI6IjQ0Nzg2NDU4LTIwNjEtNzA0OC05YWFlLWE5Mzg3Njk1NmQ2NSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJpc3MiOiJodHRwczpcL1wvY29nbml0by1pZHAudXMtZWFzdC0xLmFtYXpvbmF3cy5jb21cL3VzLWVhc3QtMV9Fck9GZlhuWDQiLCJjb2duaXRvOnVzZXJuYW1lIjoiamFzaGFuMSIsIm9yaWdpbl9qdGkiOiJmM2RiNzQ4NS1lNDU1LTQ3NjgtYjVmOS0zMGY2Yzg2YTI2ODMiLCJhdWQiOiI1cWlndHU3NmF1MnM1cjM5bjI0amh0c3Y2IiwiZXZlbnRfaWQiOiJjNDQ0MTMxOS00NWU1LTQxMWQtYTVjYy1lNjg2NmM5NmNjZGUiLCJ0b2tlbl91c2UiOiJpZCIsImF1dGhfdGltZSI6MTc0MzQ3MTcwNSwiZXhwIjoxNzQzNDc1MzA1LCJpYXQiOjE3NDM0NzE3MDYsImp0aSI6IjNlNWRmYjhmLTg4MzMtNDljYS1iNWQxLTQyMmE3YWEyMzdhMyIsImVtYWlsIjoianNpbmdoMTAwOUBteXNlbmVjYS5jYSJ9.LI-yCVroCzEyMaSbyEV_wttqtaWzyQ67IPeeelsck3V-MpVjkLzmgmArw0SvyX_zPKgvlXbDZYlUHwYTFfo65kqyC8rFWbe_kwEu4IArOUYX-bfaZxgDFBR0s2KGgZ7zuAk72E4IypwPtyyjPDC7JinqypYEETgOv-1ohEByTMDY0FWj3434TMYSIYKo4xIhZKrfsTBy_q0Ai7UnMuFQlSNDn7ROBYqOgJBRjpaGiPt9A8_B_XlVlS9uhj5R2M8HSTIEI_B4pq6u6dOh_cjENlSPT8OK8P2pxGON_6Ni6rHU4b_sh0UgLDgvQWVwwLqsHTmZ6-yZQ0m07ybmbvV3Jw")
 
 	r.ServeHTTP(w, req)
 	var response GetFragmentsResponse
@@ -441,5 +449,5 @@ func TestPostInvalidMimetypeFragment(t *testing.T) {
 	fmt.Println(GetBody(w.Body.Bytes()))
 
 	// Assert
-	assert.Equal(t, 400, w.Result().StatusCode)
+	assert.Equal(t, http.StatusUnsupportedMediaType, w.Result().StatusCode)
 }

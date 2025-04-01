@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -30,7 +29,7 @@ func CreateTestFragment() Fragment {
 	return Fragment{"1", "user", time.Now(), time.Now(), "text", 5}
 }
 
-func PostFragment(r *gin.Engine, data []byte, mimeType string, username string, password string) PostFragmentResponse {
+func PostFragment(r *gin.Engine, data []byte, mimeType string, username string, password string) *httptest.ResponseRecorder {
 	// Set up and make request
 	w := httptest.NewRecorder()
 	fileData := []byte(data)
@@ -41,8 +40,5 @@ func PostFragment(r *gin.Engine, data []byte, mimeType string, username string, 
 
 	r.ServeHTTP(w, req)
 
-	var res PostFragmentResponse
-	json.Unmarshal(w.Body.Bytes(), &res)
-
-	return res
+	return w
 }

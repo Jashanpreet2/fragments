@@ -196,7 +196,8 @@ func getRouter() *gin.Engine {
 		c.JSON(http.StatusOK, gin.H{"status": "ok",
 			"author":    "Jashanpreet Singh",
 			"githuburl": "https://github.com/Jashanpreet2/fragments",
-			"version":   "1"})
+			"version":   "1",
+			"hostname":  c.Request.URL.Hostname()})
 	})
 
 	v1 := r.Group("v1")

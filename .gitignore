@@ -134,3 +134,7 @@ dist
 tmp
 c.out
 fragments.exe
+
+# Minio
+./minio/data:/data
+./minio

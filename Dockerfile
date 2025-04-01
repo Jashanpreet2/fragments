@@ -23,4 +23,4 @@ COPY --from=buildstage /app/.env.debug /app/
 COPY --from=buildstage /app/testProfiles.csv /app/
 
 ENTRYPOINT [ "./fragments" ]
-CMD ["./fragments", "debug"]
+CMD ["./fragments", "prod"]

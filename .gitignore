@@ -137,4 +137,4 @@ fragments.exe
 
 # Minio
 ./minio/data:/data
-./minio
+minio

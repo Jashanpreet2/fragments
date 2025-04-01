@@ -50,7 +50,7 @@ func Initialize() {
 	}
 
 	if err != nil {
-		log.Fatal("Failed to load environment variables")
+		log.Fatal(err)
 	}
 
 	if mode == "debug" {

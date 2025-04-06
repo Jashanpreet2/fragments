@@ -7,6 +7,8 @@ import (
 	"slices"
 	"strings"
 	"time"
+
+	"github.com/Jashanpreet2/fragments/internal/utils"
 )
 
 type Fragment struct {
@@ -63,7 +65,7 @@ func (frag *Fragment) ConvertMimetype(ext string) ([]byte, string, error) {
 	if frag.MimeType() == "text/markdown" {
 		sugar.Info(mimeType)
 		if mimeType == "text/html" {
-			return ConvertMdToHtml(data), "text/markdown", nil
+			return utils.ConvertMdToHtml(data), "text/markdown", nil
 		}
 	}
 	return nil, "", errors.New("unsupported extension")

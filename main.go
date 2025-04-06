@@ -107,7 +107,6 @@ func authenticate() gin.HandlerFunc {
 			sugar.Info("Local authentication using information from CSV files.")
 			req := c.Request
 			if username, password, ok := req.BasicAuth(); ok {
-				sugar.Info("Ok so far")
 				if localauthentication.AuthenticateTestProfile(os.Getenv("TEST_PROFILE_PATH"), username, password) {
 					c.Set("username", username)
 					c.Next()
@@ -180,7 +179,6 @@ func authenticate() gin.HandlerFunc {
 				c.Next()
 			}
 		}
-
 	}
 }
 
@@ -239,7 +237,7 @@ func getRouter() *gin.Engine {
 		}
 		username := hashing.HashString(c.GetString("username"))
 		fragment_id := GenerateID(username)
-		sugar.Info("DATAA:", string(fileData))
+		sugar.Info("File data: ", string(fileData))
 		fragmentType := c.GetHeader("Content-Type")
 		if !IsSupportedType(fragmentType) {
 			c.JSON(http.StatusUnsupportedMediaType, gin.H{"message": "The specified file format is currently not supported!"})
@@ -275,14 +273,13 @@ func getRouter() *gin.Engine {
 		username := c.GetString("username")
 		sugar.Infof("Request to fetch fragments. User ID: %s. Fragment_id: %s", username, fragment_id)
 		fragment, ok := GetFragment(hashing.HashString(username), fragment_id)
-		sugar.Info("ok?", ok)
 		if !ok {
 			c.JSON(http.StatusNotFound, gin.H{"message": "Failed to find fragments with " +
 				"the specified user id and fragment_id"})
 			sugar.Error("Failed to find user's fragments. Check if the username was hashed successfully")
 			return
 		}
-		sugar.Info(fragment.MimeType())
+		sugar.Info("File type: ", fragment.MimeType())
 		var err error
 		var fileData []byte
 		var mimeType string

@@ -1,4 +1,4 @@
-package main
+package testutils
 
 import (
 	"bytes"
@@ -7,6 +7,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/Jashanpreet2/fragments/internal/config"
+	"github.com/Jashanpreet2/fragments/internal/fragment"
 	"github.com/gin-gonic/gin"
 )
 
@@ -19,14 +21,14 @@ func PreTestSetup(mode string) func() {
 	} else {
 		os.Args[len(os.Args)-1] = mode
 	}
-	Initialize()
+	config.Config()
 	return func() {
-		ResetDB()
+		fragment.ResetDB()
 	}
 }
 
-func CreateTestFragment() Fragment {
-	return Fragment{"1", "user", time.Now(), time.Now(), "text", 5}
+func CreateTestFragment() fragment.Fragment {
+	return fragment.Fragment{Id: "1", OwnerId: "user", Created: time.Now(), Updated: time.Now(), FragmentType: "text", Size: 5}
 }
 
 func PostFragment(r *gin.Engine, data []byte, mimeType string, username string, password string) *httptest.ResponseRecorder {

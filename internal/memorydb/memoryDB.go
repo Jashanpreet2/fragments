@@ -1,10 +1,14 @@
-package main
+package memorydb
 
-type localdb struct {
+import (
+	"github.com/Jashanpreet2/fragments/internal/logger"
+)
+
+type LocalDB struct {
 	db_map map[string]map[string]any
 }
 
-func (db *localdb) Put(pk string, sk string, val any) bool {
+func (db *LocalDB) Put(pk string, sk string, val any) bool {
 	if db.db_map == nil {
 		db.db_map = map[string]map[string]any{}
 	}
@@ -15,7 +19,7 @@ func (db *localdb) Put(pk string, sk string, val any) bool {
 	return true
 }
 
-func (db *localdb) GetSKs(pk string) []string {
+func (db *LocalDB) GetSKs(pk string) []string {
 	if db.db_map[pk] == nil {
 		return []string{}
 	}
@@ -28,16 +32,16 @@ func (db *localdb) GetSKs(pk string) []string {
 	return sks
 }
 
-func (db *localdb) GetValue(pk string, sk string) (any, bool) {
-	sugar.Info("Finding a value in the following map:")
-	sugar.Info(db.db_map)
+func (db *LocalDB) GetValue(pk string, sk string) (any, bool) {
+	logger.Sugar.Info("Finding a value in the following map:")
+	logger.Sugar.Info(db.db_map)
 	if db.db_map[pk] != nil && db.db_map[pk][sk] != nil {
 		return db.db_map[pk][sk], true
 	}
 	return nil, false
 }
 
-func (db *localdb) DeleteValue(pk string, sk string) bool {
+func (db *LocalDB) DeleteValue(pk string, sk string) bool {
 	if db.db_map[pk] != nil && db.db_map[pk][sk] != nil {
 		delete(db.db_map[pk], sk)
 		return true

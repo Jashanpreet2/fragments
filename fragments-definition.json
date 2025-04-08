@@ -23,11 +23,11 @@
                 },
                 {
                     "name": "AWS_COGNITO_CLIENT_ID",
-                    "value": "5qigtu76au2s5r39n24jhtsv6"
+                    "value": ""
                 },
                 {
                     "name": "AWS_COGNITO_POOL_ID",
-                    "value": "us-east-1_ErOFfXnX4"
+                    "value": ""
                 }
             ],
             "environmentFiles": [],

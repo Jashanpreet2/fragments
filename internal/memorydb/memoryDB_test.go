@@ -1,4 +1,4 @@
-package main
+package memorydb
 
 import (
 	"testing"
@@ -7,15 +7,13 @@ import (
 )
 
 func TestMemoryDB(t *testing.T) {
-	teardown := PreTestSetup("debug")
-	defer teardown()
 	t.Run("TestPutValue", func(t *testing.T) {
-		testDB := localdb{}
+		testDB := LocalDB{}
 		assert.Equal(t, true, testDB.Put("TestPK", "TestSK", "TestValue"))
 	})
 
 	t.Run("TestGetValueSuccess", func(t *testing.T) {
-		testDB := localdb{}
+		testDB := LocalDB{}
 		pk := "TestPK"
 		sk := "TestSK"
 		value := "TestValue"
@@ -28,7 +26,7 @@ func TestMemoryDB(t *testing.T) {
 	})
 
 	t.Run("TestGetValueFail", func(t *testing.T) {
-		testDB := localdb{}
+		testDB := LocalDB{}
 		pk := "TestPK"
 		sk := "TestSK"
 
@@ -39,19 +37,19 @@ func TestMemoryDB(t *testing.T) {
 
 	t.Run("TestDeleteSuccess", func(t *testing.T) {
 		pk, sk, value := "TestPK", "TestSK", "TestValue"
-		testDB := localdb{}
+		testDB := LocalDB{}
 		testDB.Put(pk, sk, value)
 		assert.Equal(t, true, testDB.DeleteValue(pk, sk))
 	})
 
 	t.Run("TestDeleteFail", func(t *testing.T) {
 		pk, sk := "TestPK", "TestSK"
-		testDB := localdb{}
+		testDB := LocalDB{}
 		assert.Equal(t, false, testDB.DeleteValue(pk, sk))
 	})
 
 	t.Run("TestGetSKs", func(t *testing.T) {
-		testDB := localdb{}
+		testDB := LocalDB{}
 		pk, sk, value := "TestPK", "TestSK", "TestValue"
 		testDB.Put(pk, sk, value)
 		assert.Equal(t, []string{sk}, testDB.GetSKs(pk))

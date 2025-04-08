@@ -1,4 +1,4 @@
-package main
+package fragment
 
 import (
 	"encoding/json"
@@ -8,16 +8,17 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Jashanpreet2/fragments/internal/logger"
 	"github.com/Jashanpreet2/fragments/internal/utils"
 )
 
 type Fragment struct {
-	Id           string    `json:"id"`
-	OwnerId      string    `json:"ownerId"`
-	Created      time.Time `json:"created"`
-	Updated      time.Time `json:"updated"`
-	FragmentType string    `json:"fragmentType"`
-	Size         int       `json:"size"`
+	Id           string    `json:"id" dynamodbav:"id"`
+	OwnerId      string    `json:"ownerId" dynamodbav:"ownerId"`
+	Created      time.Time `json:"created" dynamodbav:"created"`
+	Updated      time.Time `json:"updated" dynamodbav:"updated"`
+	FragmentType string    `json:"fragmentType" dynamodbav:"fragmentType"`
+	Size         int       `json:"size" dynamodbav:"size"`
 }
 
 func (frag *Fragment) GetJson() (string, bool) {
@@ -28,22 +29,28 @@ func (frag *Fragment) GetJson() (string, bool) {
 	return string(jsonData), true
 }
 
-func (frag *Fragment) GetData() ([]byte, bool) {
-	file, ok := ReadFragmentData(frag.OwnerId, frag.Id)
-	if !ok {
-		sugar.Errorf("Failed to find data for the current fragment at userid: %s and fragment_id: %s", frag.OwnerId, frag.Id)
-		return nil, false
+func (frag *Fragment) GetData() ([]byte, error) {
+	file, err := ReadFragmentData(frag.OwnerId, frag.Id)
+	if err != nil {
+		logger.Sugar.Errorf("Failed to find data for the current fragment at userid: %s and fragment_id: %s", frag.OwnerId, frag.Id)
+		return nil, err
 	}
-	return file, true
+	return file, nil
 }
 
-func (frag *Fragment) SetData(data []byte) bool {
+// TODO: FIX THIS
+func (frag *Fragment) SetData(data []byte) error {
 	frag.Updated = time.Now()
-	WriteFragment(frag)
-	return WriteFragmentData(frag.OwnerId, frag.Id, data) && WriteFragment(frag)
+	if err := WriteFragment(frag); err != nil {
+		return err
+	}
+	if err := WriteFragmentData(frag.OwnerId, frag.Id, data); err != nil {
+		return err
+	}
+	return nil
 }
 
-func (frag *Fragment) Save() bool {
+func (frag *Fragment) Save() error {
 	return WriteFragment(frag)
 }
 
@@ -52,18 +59,18 @@ func (frag *Fragment) MimeType() string {
 }
 
 func (frag *Fragment) ConvertMimetype(ext string) ([]byte, string, error) {
-	data, ok := frag.GetData()
+	data, err := frag.GetData()
 	mime.AddExtensionType(".md", "text/markdown")
 	mime.AddExtensionType(".markdown", "text/markdown")
 	mimeType := strings.Split(mime.TypeByExtension(ext), ";")[0]
 	if mimeType == "" {
 		return nil, "", errors.New("extension doesn't exist")
 	}
-	if !ok {
+	if err != nil {
 		return nil, "", errors.New("unable to retrieve data")
 	}
 	if frag.MimeType() == "text/markdown" {
-		sugar.Info(mimeType)
+		logger.Sugar.Info(mimeType)
 		if mimeType == "text/html" {
 			return utils.ConvertMdToHtml(data), "text/markdown", nil
 		}
@@ -79,16 +86,12 @@ func (frag *Fragment) Formats() []string {
 	return []string{mimeType}
 }
 
-func GetUserFragmentIds(username string) []string {
+func GetUserFragmentIds(username string) ([]string, error) {
 	return ListFragmentIDs(username)
 }
 
-func GetFragment(username string, fragment_id string) (Fragment, bool) {
-	fragment, ok := ReadFragment(username, fragment_id)
-	if !ok {
-		sugar.Info("Unable to find the specified fragment. Previously this error was encountered when the username wasn't hashed")
-	}
-	return fragment, ok
+func GetFragment(username string, fragment_id string) (*Fragment, error) {
+	return ReadFragment(username, fragment_id)
 }
 
 func DeleteFragment(username string, fragment_id string) bool {

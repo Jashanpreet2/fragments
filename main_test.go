@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/Jashanpreet2/fragments/internal/testutils"
 	"github.com/Jashanpreet2/fragments/internal/utils"
 	"github.com/stretchr/testify/assert"
 )
@@ -45,7 +46,7 @@ type GetFragmentsExpandedResponse struct {
 }
 
 func TestHealthCheck(t *testing.T) {
-	setup := PreTestSetup("debug")
+	setup := testutils.PreTestSetup("debug")
 	defer setup()
 
 	// Set up and make request
@@ -59,7 +60,7 @@ func TestHealthCheck(t *testing.T) {
 }
 
 func TestCacheControlHeader(t *testing.T) {
-	setup := PreTestSetup("debug")
+	setup := testutils.PreTestSetup("debug")
 	defer setup()
 
 	// Set up and make request
@@ -73,7 +74,7 @@ func TestCacheControlHeader(t *testing.T) {
 }
 
 func TestOkInResponse(t *testing.T) {
-	setup := PreTestSetup("debug")
+	setup := testutils.PreTestSetup("debug")
 	defer setup()
 
 	// Set up and make request
@@ -96,7 +97,7 @@ func TestOkInResponse(t *testing.T) {
 }
 
 func TestBodyInformation(t *testing.T) {
-	setup := PreTestSetup("debug")
+	setup := testutils.PreTestSetup("debug")
 	defer setup()
 
 	// Set up and make request
@@ -121,7 +122,7 @@ func TestBodyInformation(t *testing.T) {
 }
 
 func TestUnauthenticatedRequest(t *testing.T) {
-	setup := PreTestSetup("debug")
+	setup := testutils.PreTestSetup("debug")
 	defer setup()
 
 	// Set up and make request
@@ -136,7 +137,7 @@ func TestUnauthenticatedRequest(t *testing.T) {
 }
 
 func TestIncorrectLoginCredentials(t *testing.T) {
-	setup := PreTestSetup("debug")
+	setup := testutils.PreTestSetup("debug")
 	defer setup()
 
 	// Set up and make request
@@ -151,7 +152,7 @@ func TestIncorrectLoginCredentials(t *testing.T) {
 }
 
 func TestAuthenticatedUser(t *testing.T) {
-	setup := PreTestSetup("debug")
+	setup := testutils.PreTestSetup("debug")
 	defer setup()
 
 	// Set up and make request
@@ -166,7 +167,7 @@ func TestAuthenticatedUser(t *testing.T) {
 }
 
 func TestPostFragment(t *testing.T) {
-	setup := PreTestSetup("debug")
+	setup := testutils.PreTestSetup("debug")
 	defer setup()
 
 	// Set up and make request
@@ -188,7 +189,7 @@ func TestPostFragment(t *testing.T) {
 }
 
 func TestGetFragments(t *testing.T) {
-	setup := PreTestSetup("debug")
+	setup := testutils.PreTestSetup("debug")
 	defer setup()
 
 	r := getRouter()
@@ -197,7 +198,7 @@ func TestGetFragments(t *testing.T) {
 	username := "user1@email.com"
 	password := "password1"
 
-	w := PostFragment(r, fileData, mimeType, username, password)
+	w := testutils.PostFragment(r, fileData, mimeType, username, password)
 	var postFragmentResponse PostFragmentResponse
 	json.Unmarshal(w.Body.Bytes(), &postFragmentResponse)
 
@@ -213,7 +214,7 @@ func TestGetFragments(t *testing.T) {
 }
 
 func TestGetFragmentsExpanded(t *testing.T) {
-	setup := PreTestSetup("debug")
+	setup := testutils.PreTestSetup("debug")
 	defer setup()
 
 	r := getRouter()
@@ -222,7 +223,7 @@ func TestGetFragmentsExpanded(t *testing.T) {
 	username := "user1@email.com"
 	password := "password1"
 
-	w := PostFragment(r, fileData, mimeType, username, password)
+	w := testutils.PostFragment(r, fileData, mimeType, username, password)
 	var postFragmentResponse PostFragmentResponse
 	json.Unmarshal(w.Body.Bytes(), &postFragmentResponse)
 
@@ -238,7 +239,7 @@ func TestGetFragmentsExpanded(t *testing.T) {
 }
 
 func TestGetFragment(t *testing.T) {
-	setup := PreTestSetup("debug")
+	setup := testutils.PreTestSetup("debug")
 	defer setup()
 
 	r := getRouter()
@@ -247,7 +248,7 @@ func TestGetFragment(t *testing.T) {
 	username := "user1@email.com"
 	password := "password1"
 
-	w := PostFragment(r, fileData, mimeType, username, password)
+	w := testutils.PostFragment(r, fileData, mimeType, username, password)
 	location := w.Header().Get("Location")
 
 	fmt.Println("Location: ", location)
@@ -266,7 +267,7 @@ func TestGetFragment(t *testing.T) {
 }
 
 func TestGetNonExistentFragment(t *testing.T) {
-	setup := PreTestSetup("debug")
+	setup := testutils.PreTestSetup("debug")
 	defer setup()
 
 	r := getRouter()
@@ -280,7 +281,7 @@ func TestGetNonExistentFragment(t *testing.T) {
 }
 
 func TestGetNonExistentFragmentInfo(t *testing.T) {
-	setup := PreTestSetup("debug")
+	setup := testutils.PreTestSetup("debug")
 	defer setup()
 
 	r := getRouter()
@@ -294,7 +295,7 @@ func TestGetNonExistentFragmentInfo(t *testing.T) {
 }
 
 func TestGetFragmentInfo(t *testing.T) {
-	setup := PreTestSetup("debug")
+	setup := testutils.PreTestSetup("debug")
 	defer setup()
 
 	r := getRouter()
@@ -303,7 +304,7 @@ func TestGetFragmentInfo(t *testing.T) {
 	username := "user1@email.com"
 	password := "password1"
 
-	w := PostFragment(r, fileData, mimeType, username, password)
+	w := testutils.PostFragment(r, fileData, mimeType, username, password)
 	var postFragmentResponse PostFragmentResponse
 	json.Unmarshal(w.Body.Bytes(), &postFragmentResponse)
 	location := w.Header().Get("Location")
@@ -321,7 +322,7 @@ func TestGetFragmentInfo(t *testing.T) {
 }
 
 func TestGetConvertedFragment(t *testing.T) {
-	setup := PreTestSetup("debug")
+	setup := testutils.PreTestSetup("debug")
 	defer setup()
 
 	r := getRouter()
@@ -330,7 +331,7 @@ func TestGetConvertedFragment(t *testing.T) {
 	username := "user1@email.com"
 	password := "password1"
 
-	w := PostFragment(r, fileData, mimeType, username, password)
+	w := testutils.PostFragment(r, fileData, mimeType, username, password)
 	location := w.Header().Get("Location")
 	fmt.Println("Location: ", location)
 	getReq, _ := http.NewRequest("GET", location+".html", nil)
@@ -346,7 +347,7 @@ func TestGetConvertedFragment(t *testing.T) {
 }
 
 func TestGetConvertedFragmentInvalidExtension(t *testing.T) {
-	setup := PreTestSetup("debug")
+	setup := testutils.PreTestSetup("debug")
 	defer setup()
 
 	r := getRouter()
@@ -355,7 +356,7 @@ func TestGetConvertedFragmentInvalidExtension(t *testing.T) {
 	username := "user1@email.com"
 	password := "password1"
 
-	w := PostFragment(r, fileData, mimeType, username, password)
+	w := testutils.PostFragment(r, fileData, mimeType, username, password)
 	location := w.Header().Get("Location")
 
 	fmt.Println("Location: ", w.Header().Get("Location"))
@@ -368,7 +369,7 @@ func TestGetConvertedFragmentInvalidExtension(t *testing.T) {
 }
 
 // func TestAwsAuthenticationValidAuthorization(t *testing.T) {
-// 	setup := PreTestSetup("prod")
+// 	setup :=testutils.PreTestSetup("prod")
 // 	defer setup()
 
 // 	r := getRouter()
@@ -385,7 +386,7 @@ func TestGetConvertedFragmentInvalidExtension(t *testing.T) {
 // }
 
 func TestAwsAuthenticationEmptyToken(t *testing.T) {
-	setup := PreTestSetup("prod")
+	setup := testutils.PreTestSetup("prod")
 	defer setup()
 
 	r := getRouter()
@@ -400,7 +401,7 @@ func TestAwsAuthenticationEmptyToken(t *testing.T) {
 }
 
 func TestAwsAuthenticationInvalidAuthorization(t *testing.T) {
-	setup := PreTestSetup("prod")
+	setup := testutils.PreTestSetup("prod")
 	defer setup()
 
 	r := getRouter()
@@ -415,7 +416,7 @@ func TestAwsAuthenticationInvalidAuthorization(t *testing.T) {
 }
 
 func TestAwsAuthenticationEmptyAuthorizationHeader(t *testing.T) {
-	setup := PreTestSetup("prod")
+	setup := testutils.PreTestSetup("prod")
 	defer setup()
 
 	r := getRouter()
@@ -430,7 +431,7 @@ func TestAwsAuthenticationEmptyAuthorizationHeader(t *testing.T) {
 }
 
 func TestPostInvalidMimetypeFragment(t *testing.T) {
-	setup := PreTestSetup("debug")
+	setup := testutils.PreTestSetup("debug")
 	defer setup()
 
 	// Set up and make request

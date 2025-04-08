@@ -29,6 +29,9 @@ jobs:
     env:
       AWS_COGNITO_POOL_ID: ${{secrets.AWS_COGNITO_POOL_ID}}
       AWS_COGNITO_CLIENT_ID : ${{secrets.AWS_COGNITO_CLIENT_ID}}
+      aws_access_key_id: ${{secrets.aws_access_key_id}}
+      aws_secret_access_key : ${{secrets.aws_secret_access_key}}
+      aws_session_token : ${{secrets.aws_session_token}}
     steps:
       - uses: actions/checkout@v4
       - name: Setup Go

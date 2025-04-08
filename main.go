@@ -3,67 +3,21 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/Jashanpreet2/fragments/internal/config"
+	"github.com/Jashanpreet2/fragments/internal/fragment"
+	"github.com/Jashanpreet2/fragments/internal/logger"
 	"github.com/Jashanpreet2/fragments/localauthentication"
 	"github.com/gin-gonic/gin"
 	"github.com/gohugoio/hugo/common/hashing"
 	cognitoJwtVerify "github.com/jhosan7/cognito-jwt-verify"
-	"github.com/joho/godotenv"
 	"go.uber.org/zap"
 )
-
-var logger *zap.Logger
-var sugar *zap.SugaredLogger
-var localCsvAuthentication bool
-var mode string
-
-func Initialize() {
-	var unspecifiedEnvironmentMessage string = "Server environment unspecified. Please specify debug or prod as the command line argument."
-	if len(os.Args) < 2 {
-		log.Fatal(unspecifiedEnvironmentMessage)
-	}
-	mode = strings.ToLower(os.Args[len(os.Args)-1])
-	if mode != "debug" && mode != "prod" {
-		log.Fatal(unspecifiedEnvironmentMessage)
-	}
-
-	// Logger setup
-	// logger = getLogger(os.Getenv("LOG_LEVEL"))
-	logger, _ = zap.NewDevelopment()
-
-	sugar = logger.Sugar()
-
-	// Load environment variables
-	var err error
-	if os.Getenv("TEST_PROFILE_PATH") == "" && mode == "debug" {
-		err = godotenv.Load(".env.debug")
-	} else if os.Getenv("AWS_COGNITO_POOL_ID") == "" && os.Getenv("AWS_COGNITO_CLIENT_ID") == "" && mode == "prod" {
-		err = godotenv.Load(".env.prod")
-	} else if os.Getenv("TEST_PROFILE_PATH") == "" && os.Getenv("AWS_COGNITO_POOL_ID") == "" && os.Getenv("AWS_COGNITO_CLIENT_ID") == "" {
-		sugar.Fatal("Mode is neither debug nor prod. Ensure that the correct mode was passed when starting the application.")
-	}
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if mode == "debug" {
-		localCsvAuthentication = true
-	} else {
-		localCsvAuthentication = false
-	}
-
-	// Check that the necessary environment variables are present
-	if os.Getenv("AWS_COGNITO_POOL_ID") == "" && os.Getenv("AWS_COGNITO_CLIENT_ID") == "" && !localCsvAuthentication {
-		sugar.Fatal("Unable to find AWS_COGNITO_POOL_ID and AWS_COGNITO_CLIENT_ID")
-	}
-}
 
 // Returns the specific logger based on the log level passed.
 // func getLogger(logLevel string) *zap.Logger {
@@ -103,8 +57,8 @@ func SetHeaders() gin.HandlerFunc {
 
 func authenticate() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if localCsvAuthentication {
-			sugar.Info("Local authentication using information from CSV files.")
+		if config.LocalCsvAuthentication {
+			logger.Sugar.Info("Local authentication using information from CSV files.")
 			req := c.Request
 			if username, password, ok := req.BasicAuth(); ok {
 				if localauthentication.AuthenticateTestProfile(os.Getenv("TEST_PROFILE_PATH"), username, password) {
@@ -126,7 +80,7 @@ func authenticate() gin.HandlerFunc {
 					TokenUse:   "id",
 				}
 
-				// sugar.Info("Authentication in process")
+				// logger.Sugar.Info("Authentication in process")
 				token := c.GetHeader("Authorization")
 
 				if !strings.HasPrefix(token, "Bearer ") {
@@ -145,7 +99,7 @@ func authenticate() gin.HandlerFunc {
 
 				verify, err := cognitoJwtVerify.Create(cognitoConfig)
 				if err != nil {
-					sugar.Error("Failed to initialize cognito jwt verify")
+					logger.Sugar.Error("Failed to initialize cognito jwt verify")
 					c.JSON(http.StatusInternalServerError, gin.H{"message": "System failed to start verification"})
 					c.Abort()
 					return
@@ -153,7 +107,7 @@ func authenticate() gin.HandlerFunc {
 
 				payload, err := verify.Verify(token)
 				if err != nil {
-					sugar.Info("Failed to verify token", zap.Error(err))
+					logger.Sugar.Info("Failed to verify token", zap.Error(err))
 					c.JSON(http.StatusUnauthorized, gin.H{"message": "Unable to login"})
 					c.Abort()
 					return
@@ -161,7 +115,7 @@ func authenticate() gin.HandlerFunc {
 
 				jsonData, err := json.Marshal(payload)
 				if err != nil {
-					sugar.Info("Failed to parse token", zap.Error(err))
+					logger.Sugar.Info("Failed to parse token", zap.Error(err))
 					c.JSON(http.StatusUnauthorized, gin.H{"message": "Unable to login"})
 					c.Abort()
 					return
@@ -170,11 +124,11 @@ func authenticate() gin.HandlerFunc {
 				var v map[string]any
 				if err := json.Unmarshal(jsonData, &v); err != nil {
 					c.JSON(http.StatusBadRequest, gin.H{"message": "Unable to process request"})
-					sugar.Error(err)
-					sugar.Warn("Failed to retrieve user data from request body")
+					logger.Sugar.Error(err)
+					logger.Sugar.Warn("Failed to retrieve user data from request body")
 					c.Abort()
 				}
-				sugar.Info(v["cognito:username"])
+				logger.Sugar.Info(v["cognito:username"])
 				c.Set("username", v["cognito:username"])
 				c.Next()
 			}
@@ -183,8 +137,6 @@ func authenticate() gin.HandlerFunc {
 }
 
 func getRouter() *gin.Engine {
-	Initialize()
-
 	// Create router
 	r := gin.New()
 	r.MaxMultipartMemory = 8 << 23
@@ -203,25 +155,29 @@ func getRouter() *gin.Engine {
 
 	v1.GET("/fragments", func(c *gin.Context) {
 		username := c.GetString("username")
-		sugar.Info("Content type: ", c.GetHeader("Content-Type"))
-		sugar.Info(username)
+		logger.Sugar.Info("Content type: ", c.GetHeader("Content-Type"))
+		logger.Sugar.Info(username)
 		if username == "" {
-			sugar.Info("Request passed through authentication but still failed to retrieve the username")
+			logger.Sugar.Info("Request passed through authentication but still failed to retrieve the username")
 			c.JSON(http.StatusBadRequest, gin.H{"message": "Failed to parse username"})
 		}
-		fragmentIds := GetUserFragmentIds(hashing.HashString(username))
-
+		fragmentIds, err := fragment.GetUserFragmentIds(hashing.HashString(username))
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to retrieve fragment IDs"})
+			return
+		}
+		logger.Sugar.Info(fragmentIds)
 		if c.Query("expand") == "1" {
-			fragments := []Fragment{}
+			fragments := []*fragment.Fragment{}
 			for _, fragmentId := range fragmentIds {
-				fragment, found := GetFragment(hashing.HashString(username), fragmentId)
-				if !found {
-					sugar.Info("Failed to find fragment with fragment id " + fragmentId + " for user " + username)
+				fragment, err := fragment.GetFragment(hashing.HashString(username), fragmentId)
+				if err != nil {
+					logger.Sugar.Info("Failed to find fragment with fragment id " + fragmentId + " for user " + username)
 				} else {
 					fragments = append(fragments, fragment)
 				}
 				fragmentsjson, _ := json.Marshal(fragments)
-				sugar.Info(string(fragmentsjson))
+				logger.Sugar.Info(string(fragmentsjson))
 			}
 			c.JSON(http.StatusOK, gin.H{"status": "ok", "fragments": fragments})
 			return
@@ -232,21 +188,26 @@ func getRouter() *gin.Engine {
 	v1.POST("/fragments", func(c *gin.Context) {
 		fileData, err := c.GetRawData()
 		if err != nil {
-			sugar.Info(err)
+			logger.Sugar.Info(err)
 			c.JSON(http.StatusBadRequest, gin.H{"message": "Unable to retrieve file data from the request body!"})
 		}
 		username := hashing.HashString(c.GetString("username"))
-		fragment_id := GenerateID(username)
-		sugar.Info("File data: ", string(fileData))
+		fragment_id := fragment.GenerateID(username)
+		logger.Sugar.Info("File data: ", string(fileData))
 		fragmentType := c.GetHeader("Content-Type")
-		if !IsSupportedType(fragmentType) {
+		if !fragment.IsSupportedType(fragmentType) {
 			c.JSON(http.StatusUnsupportedMediaType, gin.H{"message": "The specified file format is currently not supported!"})
-			sugar.Infof("User tried to store fragment of type %s", fragmentType)
+			logger.Sugar.Infof("User tried to store fragment of type %s", fragmentType)
 			return
 		}
-		fragment := Fragment{strconv.Itoa(fragment_id), username, time.Now(), time.Now(), fragmentType, len(fileData)}
+		fragment := fragment.Fragment{
+			Id:      strconv.Itoa(fragment_id),
+			OwnerId: username, Created: time.Now(),
+			Updated:      time.Now(),
+			FragmentType: fragmentType,
+			Size:         len(fileData)}
 		fragment.SetData(fileData)
-		sugar.Infof("File data being saved: %s", fileData)
+		logger.Sugar.Infof("File data being saved: %s", fileData)
 		fragment.Save()
 
 		scheme := "http://"
@@ -271,34 +232,38 @@ func getRouter() *gin.Engine {
 			}
 		}
 		username := c.GetString("username")
-		sugar.Infof("Request to fetch fragments. User ID: %s. Fragment_id: %s", username, fragment_id)
-		fragment, ok := GetFragment(hashing.HashString(username), fragment_id)
-		if !ok {
-			c.JSON(http.StatusNotFound, gin.H{"message": "Failed to find fragments with " +
-				"the specified user id and fragment_id"})
-			sugar.Error("Failed to find user's fragments. Check if the username was hashed successfully")
+		frag, err := fragment.GetFragment(hashing.HashString(username), fragment_id)
+		logger.Sugar.Infof("Request to fetch fragments. User ID: %s. Fragment_id: %s", hashing.HashString(username), fragment_id)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "Internal Server Error"})
+			logger.Sugar.Error("Failed to find user's fragments. Check if the username was hashed successfully")
 			return
 		}
-		sugar.Info("File type: ", fragment.MimeType())
-		var err error
+		if frag == nil {
+			c.JSON(http.StatusNotFound, gin.H{"message": "Failed to find fragments with " +
+				"the specified user id and fragment_id"})
+			logger.Sugar.Error("Failed to find user's fragments. Check if the username was hashed successfully")
+			return
+		}
+		logger.Sugar.Info("File type: ", frag.MimeType())
 		var fileData []byte
 		var mimeType string
 		if ext == "" {
-			fileData, ok = fragment.GetData()
-			mimeType = fragment.MimeType()
-			if !ok {
-				sugar.Info("Failed to find the fragment")
+			fileData, err = frag.GetData()
+			mimeType = frag.MimeType()
+			if err != nil {
+				logger.Sugar.Info("Failed to find the fragment")
 				c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to find the fragment data"})
 				return
 			}
 		} else {
-			fileData, mimeType, err = fragment.ConvertMimetype(ext)
+			fileData, mimeType, err = frag.ConvertMimetype(ext)
 			if err != nil {
 				c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 				return
 			}
 		}
-		sugar.Info("Data in file: ", string(fileData))
+		logger.Sugar.Info("Data in file: ", string(fileData))
 		c.Header("Content-Length", strconv.Itoa(len(fileData)))
 		c.Data(200, mimeType, fileData)
 	})
@@ -306,8 +271,11 @@ func getRouter() *gin.Engine {
 	v1.GET("/fragment/:id/info", func(c *gin.Context) {
 		id := c.Param("id")
 
-		fragment, ok := GetFragment(hashing.HashString(c.GetString("username")), id)
-		if !ok {
+		fragment, err := fragment.GetFragment(hashing.HashString(c.GetString("username")), id)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "Server side error"})
+		}
+		if fragment == nil {
 			c.JSON(http.StatusNotFound, gin.H{"message": "Unable to find the specified fragment!"})
 			return
 		}
@@ -319,16 +287,37 @@ func getRouter() *gin.Engine {
 }
 
 func main() {
+	config.Config()
 	// Create and assign logger instance to the global variable
-	var err error
 
-	Initialize()
+	// UPLOADING TO DYNAMO DB
+	// frag := fragment.Fragment{
+	// 	Id:           "jashansfrag",
+	// 	OwnerId:      "Jashan",
+	// 	Created:      time.Now(),
+	// 	Updated:      time.Now(),
+	// 	FragmentType: "text/plain",
+	// 	Size:         5,
+	// }
+
+	// frag.SetData([]byte("Hello"))
+	// frag.Save()
+	// newFrag, _ := fragment.GetFragment("324407508241184488", "0")
+	// logger.Sugar.Info(newFrag)
+
+	// UPLOADING TO S3
+	// logger.Sugar.Info(fragment.GetS3Client().UploadFragmentDataToS3("jashan", "something", []byte("abcde")))
+	// response, err := fragment.GetS3Client().GetFragmentDataFromS3("jashan", "something")
+	// if err != nil {
+	// 	logger.Sugar.Info(err)
+	// }
+	// logger.Sugar.Info(string(response))
 
 	// Start server
 	port := os.Getenv("PORT")
 	r := getRouter()
-	err = r.Run(port)
+	err := r.Run(port)
 	if err != nil {
-		sugar.Fatal("Failed to start the server")
+		logger.Sugar.Fatal("Failed to start the server")
 	}
 }

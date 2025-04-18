@@ -25,8 +25,6 @@ func Config() {
 		logger.Sugar.Fatal(unspecifiedEnvironmentMessage)
 	}
 
-	logger.Sugar.Info("mode: " + mode)
-	logger.Sugar.Info("aws access: " + os.Getenv("aws_access_key_id")[0:5] + " " + os.Getenv("aws_access_key_id")[5:])
 	// Load environment variables
 	var err error
 	if os.Getenv("TEST_PROFILE_PATH") == "" && mode == "debug" {

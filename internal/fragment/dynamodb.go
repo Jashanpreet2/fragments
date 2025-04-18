@@ -29,7 +29,6 @@ func GetDynamoDBClient() (*FragmentsDynamoDBClient, error) {
 	}
 	ddbClient := dynamodb.NewFromConfig(cfg, func(o *dynamodb.Options) {
 		o.Region = "us-east-1"
-		o.sec
 	})
 	fragmentsDynamoDBClient = &FragmentsDynamoDBClient{ddbClient, "fragments"}
 	return fragmentsDynamoDBClient, nil

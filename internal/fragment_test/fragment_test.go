@@ -10,6 +10,9 @@ package fragment_test
 // )
 
 // func TestFragment(t *testing.T) {
+// 	setup := testutils.PreTestSetup("debug")
+// 	defer setup()
+
 // 	t.Run("TestGetJson", func(t *testing.T) {
 // 		frag := testutils.CreateTestFragment()
 // 		correctJson, _ := json.Marshal(frag)
@@ -35,7 +38,12 @@ package fragment_test
 // 	t.Run("TestGetUserFragmentIds", func(t *testing.T) {
 // 		frag := testutils.CreateTestFragment()
 // 		frag.Save()
-// 		assert.Equal(t, []string{frag.Id}, fragment.GetUserFragmentIds(frag.OwnerId))
+// 		ids, err := fragment.GetUserFragmentIds(frag.OwnerId)
+// 		if err != nil {
+// 			t.Fail()
+// 			return
+// 		}
+// 		assert.Equal(t, []string{frag.Id}, ids)
 // 	})
 
 // 	t.Run("TestGetFragment", func(t *testing.T) {

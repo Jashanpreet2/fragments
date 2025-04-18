@@ -285,6 +285,7 @@ func getRouter() *gin.Engine {
 		logger.Sugar.Info("File type: ", frag.MimeType())
 		var fileData []byte
 		var mimeType string
+		logger.Sugar.Info("Extension: ", ext)
 		if ext == "" {
 			fileData, err = frag.GetData()
 			mimeType = frag.MimeType()
@@ -296,7 +297,8 @@ func getRouter() *gin.Engine {
 		} else {
 			fileData, mimeType, err = frag.ConvertMimetype(ext)
 			if err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+				logger.Sugar.Info(err)
+				c.JSON(http.StatusBadRequest, gin.H{"message": "Failed to convert!"})
 				return
 			}
 		}

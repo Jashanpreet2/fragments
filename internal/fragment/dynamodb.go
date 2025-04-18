@@ -2,7 +2,6 @@ package fragment
 
 import (
 	"context"
-	"os"
 
 	"github.com/Jashanpreet2/fragments/internal/logger"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -30,6 +29,7 @@ func GetDynamoDBClient() (*FragmentsDynamoDBClient, error) {
 	}
 	ddbClient := dynamodb.NewFromConfig(cfg, func(o *dynamodb.Options) {
 		o.Region = "us-east-1"
+		o.sec
 	})
 	fragmentsDynamoDBClient = &FragmentsDynamoDBClient{ddbClient, "fragments"}
 	return fragmentsDynamoDBClient, nil
@@ -50,10 +50,6 @@ func (fragmentsClient *FragmentsDynamoDBClient) WriteFragment(frag *Fragment) er
 		TableName: aws.String(fragmentsClient.TableName),
 		Item:      item,
 	}
-
-	logger.Sugar.Info("aws access: " + os.Getenv("aws_access_key_id")[0:5] + " " + os.Getenv("aws_access_key_id")[5:])
-	logger.Sugar.Info("secret access " + os.Getenv("aws_secret_access_key")[0:5] + " " + os.Getenv("aws_secret_access_key")[5:])
-	logger.Sugar.Info("Aws access key value" + os.Getenv("aws_access_key_id"))
 
 	_, err = fragmentsClient.ddbClient.PutItem(context.Background(), input)
 	logger.Sugar.Info(err)

@@ -50,8 +50,11 @@ func (fragmentsClient *FragmentsDynamoDBClient) WriteFragment(frag *Fragment) er
 		TableName: aws.String(fragmentsClient.TableName),
 		Item:      item,
 	}
+
+	logger.Sugar.Info("aws access: " + os.Getenv("aws_access_key_id")[0:5] + " " + os.Getenv("aws_access_key_id")[5:])
+	logger.Sugar.Info("secret access " + os.Getenv("aws_secret_access_key")[0:5] + " " + os.Getenv("aws_secret_access_key")[5:])
 	logger.Sugar.Info("Aws access key value" + os.Getenv("aws_access_key_id"))
-	logger.Sugar.Info("Aws cognito env value" + os.Getenv("AWS_COGNITO_POOL_ID"))
+
 	_, err = fragmentsClient.ddbClient.PutItem(context.Background(), input)
 	logger.Sugar.Info(err)
 	return err

@@ -63,3 +63,14 @@ func (s3Client *S3Client) UploadFragmentDataToS3(username string, key string, da
 
 	return err
 }
+
+func (s3Client *S3Client) deleteFragment(ownerId string, fragmentId string) error {
+	_, err := s3Client.Client.DeleteObject(context.TODO(), &s3.DeleteObjectInput{
+		Bucket: aws.String(os.Getenv("S3_BUCKET")),
+		Key:    aws.String(ownerId + "/" + fragmentId),
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+}

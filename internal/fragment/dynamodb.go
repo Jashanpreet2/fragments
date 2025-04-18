@@ -88,6 +88,7 @@ func (fragmentsClient *FragmentsDynamoDBClient) GetFragmentIds(ownerId string) (
 		KeyConditions: map[string]types.Condition{
 			"ownerId": {
 				ComparisonOperator: types.ComparisonOperatorEq,
+
 				AttributeValueList: []types.AttributeValue{
 					&types.AttributeValueMemberS{Value: ownerId},
 				},
@@ -109,4 +110,19 @@ func (fragmentsClient *FragmentsDynamoDBClient) GetFragmentIds(ownerId string) (
 	}
 
 	return ids, nil
+}
+
+func (fragmentsClient *FragmentsDynamoDBClient) deleteFragment(ownerId string, fragmentId string) error {
+	_, err := fragmentsClient.ddbClient.DeleteItem(context.TODO(), &dynamodb.DeleteItemInput{
+		TableName: aws.String(fragmentsClient.TableName),
+		Key: map[string]types.AttributeValue{
+			"ownerId": &types.AttributeValueMemberS{Value: ownerId},
+			"id":      &types.AttributeValueMemberS{Value: fragmentId},
+		},
+	})
+	if err != nil {
+		logger.Sugar.Error(err)
+		return err
+	}
+	return nil
 }

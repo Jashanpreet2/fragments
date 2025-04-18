@@ -2,13 +2,16 @@ package fragment
 
 import (
 	"fmt"
+	"math/rand"
+	"strconv"
 
 	"github.com/Jashanpreet2/fragments/internal/logger"
 	"github.com/Jashanpreet2/fragments/internal/memorydb"
 )
 
 var fragmentDB memorydb.LocalDB
-var dataDB memorydb.LocalDB
+
+// var dataDB memorydb.LocalDB
 
 func WriteFragment(frag *Fragment) error {
 	client, err := GetDynamoDBClient()
@@ -45,23 +48,32 @@ func ReadFragmentData(userid string, fragment_id string) ([]byte, error) {
 
 // Deletes the fragment metadata and data from the databases
 func DeleteFragmentDB(userid string, fragment_id string) bool {
-	ok := dataDB.DeleteValue(userid, fragment_id)
-	if !ok {
-		logger.Sugar.Error(fmt.Sprintf("Attempt to fragment data that doesn't exist with userid: %s and fragment_id: %s", userid, fragment_id))
+	dynamoClient, err := GetDynamoDBClient()
+	if err != nil {
+		logger.Sugar.Error(err)
 		return false
 	}
-	ok = fragmentDB.DeleteValue(userid, fragment_id)
-	if !ok {
+	err = dynamoClient.deleteFragment(userid, fragment_id)
+	if err != nil {
+		return false
+	}
+	s3Client, err := GetS3Client()
+	if err != nil {
+		logger.Sugar.Error(err)
+		return false
+	}
+	err = s3Client.deleteFragment(userid, fragment_id)
+	if err != nil {
 		logger.Sugar.Error(fmt.Sprintf("Successfully deleted fragment data but failed to find the"+
 			"fragment metadata for userid: %s and fragment_id: %s", userid, fragment_id))
+		logger.Sugar.Error(err)
 		return false
 	}
 	return true
 }
 
-func GenerateID(userid string) int {
-	// Make sure to hash the userid before passing it here else you will keep overriding the same fragment
-	return len(fragmentDB.GetSKs(userid))
+func GenerateID() string {
+	return strconv.Itoa(rand.Int())
 }
 
 func ListFragmentIDs(userid string) ([]string, error) {
@@ -95,5 +107,5 @@ func ListFragmentMetadatas(userid string) []Fragment {
 
 func ResetDB() {
 	fragmentDB = memorydb.LocalDB{}
-	dataDB = memorydb.LocalDB{}
+	// dataDB = memorydb.LocalDB{}
 }

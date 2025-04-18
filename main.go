@@ -43,7 +43,7 @@ func SetHeaders() gin.HandlerFunc {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
 		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE")
 		c.Writer.Header().Set("Cache-Control", "no-cache")
 
 		if c.Request.Method == "OPTIONS" {
@@ -163,6 +163,7 @@ func getRouter() *gin.Engine {
 		}
 		fragmentIds, err := fragment.GetUserFragmentIds(hashing.HashString(username))
 		if err != nil {
+			logger.Sugar.Info(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to retrieve fragment IDs"})
 			return
 		}
@@ -192,7 +193,7 @@ func getRouter() *gin.Engine {
 			c.JSON(http.StatusBadRequest, gin.H{"message": "Unable to retrieve file data from the request body!"})
 		}
 		username := hashing.HashString(c.GetString("username"))
-		fragment_id := fragment.GenerateID(username)
+		fragment_id := fragment.GenerateID()
 		logger.Sugar.Info("File data: ", string(fileData))
 		fragmentType := c.GetHeader("Content-Type")
 		if !fragment.IsSupportedType(fragmentType) {
@@ -201,7 +202,7 @@ func getRouter() *gin.Engine {
 			return
 		}
 		fragment := fragment.Fragment{
-			Id:      strconv.Itoa(fragment_id),
+			Id:      fragment_id,
 			OwnerId: username, Created: time.Now(),
 			Updated:      time.Now(),
 			FragmentType: fragmentType,
@@ -217,6 +218,42 @@ func getRouter() *gin.Engine {
 
 		c.Header("Location", scheme+c.Request.Host+fmt.Sprintf("/v1/fragment/%s", fragment.Id))
 		c.JSON(http.StatusCreated, gin.H{"status": "ok", "message": "Fragment has successfully been saved",
+			"fragment": fragment})
+		// c.JSON(http.StatusOK, gin.H{"abc": "asja"})
+		c.Abort()
+	})
+	v1.PUT("/fragments/:id", func(c *gin.Context) {
+		fragment_id := c.Param("id")
+		fileData, err := c.GetRawData()
+		if err != nil {
+			logger.Sugar.Info(err)
+			c.JSON(http.StatusBadRequest, gin.H{"message": "Unable to retrieve file data from the request body!"})
+		}
+		username := hashing.HashString(c.GetString("username"))
+		logger.Sugar.Info("File data: ", string(fileData))
+		fragmentType := c.GetHeader("Content-Type")
+		if !fragment.IsSupportedType(fragmentType) {
+			c.JSON(http.StatusUnsupportedMediaType, gin.H{"message": "The specified file format is currently not supported!"})
+			logger.Sugar.Infof("User tried to store fragment of type %s", fragmentType)
+			return
+		}
+		fragment := fragment.Fragment{
+			Id:      fragment_id,
+			OwnerId: username, Created: time.Now(),
+			Updated:      time.Now(),
+			FragmentType: fragmentType,
+			Size:         len(fileData)}
+		fragment.SetData(fileData)
+		logger.Sugar.Infof("File data being saved: %s", fileData)
+		fragment.Save()
+
+		scheme := "http://"
+		if c.Request.TLS != nil {
+			scheme = "https://"
+		}
+
+		c.Header("Location", scheme+c.Request.Host+fmt.Sprintf("/v1/fragment/%s", fragment.Id))
+		c.JSON(http.StatusCreated, gin.H{"status": "ok", "message": "Fragment has successfully been updated",
 			"fragment": fragment})
 		// c.JSON(http.StatusOK, gin.H{"abc": "asja"})
 		c.Abort()
@@ -281,6 +318,18 @@ func getRouter() *gin.Engine {
 		}
 
 		c.JSON(http.StatusOK, gin.H{"status": "ok", "fragment": fragment})
+	})
+
+	v1.DELETE("/fragments/:id", func(c *gin.Context) {
+		fragment_id := c.Param("id")
+		if fragment_id == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"id": "Please enter a valid ID!"})
+			c.Next()
+			return
+		}
+		username := c.GetString("username")
+		fragment.DeleteFragment(hashing.HashString(username), fragment_id)
+		c.JSON(http.StatusAccepted, gin.H{"message": "Fragment with ID" + fragment_id + " has been deleted!"})
 	})
 
 	return r

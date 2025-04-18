@@ -54,13 +54,18 @@ func (s3Client *S3Client) GetFragmentDataFromS3(username string, key string) ([]
 }
 
 func (s3Client *S3Client) UploadFragmentDataToS3(username string, key string, data []byte) error {
+	logger.Sugar.Info("Uploading fragment to s3. Username: " + username + " | Key: " + key)
 	_, err := s3Client.PutObject(context.Background(), &s3.PutObjectInput{
 		Bucket:            aws.String(os.Getenv("S3_BUCKET")),
 		Key:               aws.String(username + "/" + key),
 		ChecksumAlgorithm: types.ChecksumAlgorithmCrc32,
 		Body:              bytes.NewReader(data),
 	})
-
+	if err != nil {
+		logger.Sugar.Info("Failed to upload fragment to s3", err)
+	} else {
+		logger.Sugar.Info("Successfully uploaded fragment to s3")
+	}
 	return err
 }
 

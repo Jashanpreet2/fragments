@@ -68,7 +68,6 @@ func (fragmentsClient *FragmentsDynamoDBClient) GetFragment(ownerId string, id s
 			"id":      &types.AttributeValueMemberS{Value: id},
 		},
 	}
-	logger.Sugar.Info(input.AttributesToGet)
 
 	var frag Fragment
 	out, err := fragmentsClient.ddbClient.GetItem(context.TODO(), input)
@@ -77,7 +76,6 @@ func (fragmentsClient *FragmentsDynamoDBClient) GetFragment(ownerId string, id s
 		return nil, nil
 	}
 	attributevalue.UnmarshalMap(out.Item, &frag)
-	logger.Sugar.Info(err)
 	return &frag, err
 }
 

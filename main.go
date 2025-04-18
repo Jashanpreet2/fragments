@@ -273,7 +273,7 @@ func getRouter() *gin.Engine {
 		logger.Sugar.Infof("Request to fetch fragments. User ID: %s. Fragment_id: %s", hashing.HashString(username), fragment_id)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"message": "Internal Server Error"})
-			logger.Sugar.Error("Failed to find user's fragments. Check if the username was hashed successfully")
+			logger.Sugar.Error("Failed to find user's fragments. Check if the username was hashed successfully\n", err)
 			return
 		}
 		if frag == nil {
@@ -297,7 +297,6 @@ func getRouter() *gin.Engine {
 		} else {
 			fileData, mimeType, err = frag.ConvertMimetype(ext)
 			if err != nil {
-				logger.Sugar.Info(err)
 				c.JSON(http.StatusBadRequest, gin.H{"message": "Failed to convert!"})
 				return
 			}

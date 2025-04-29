@@ -33,6 +33,7 @@ func (frag *Fragment) GetData() ([]byte, error) {
 	file, err := ReadFragmentData(frag.OwnerId, frag.Id)
 	if err != nil {
 		logger.Sugar.Errorf("Failed to find data for the current fragment at userid: %s and fragment_id: %s", frag.OwnerId, frag.Id)
+		logger.Sugar.Error(err)
 		return nil, err
 	}
 	return file, nil

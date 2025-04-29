@@ -40,6 +40,7 @@ func GetS3Client() (*S3Client, error) {
 }
 
 func (s3Client *S3Client) GetFragmentDataFromS3(username string, key string) ([]byte, error) {
+	logger.Sugar.Infof("Bucket name: " + os.Getenv("S3_BUCKET"))
 	object, err := s3Client.GetObject(context.TODO(), &s3.GetObjectInput{
 		Bucket:       aws.String(os.Getenv("S3_BUCKET")),
 		Key:          aws.String(username + "/" + key),

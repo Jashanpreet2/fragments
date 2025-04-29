@@ -239,7 +239,7 @@ func TestGetFragmentsExpanded(t *testing.T) {
 }
 
 func TestGetFragment(t *testing.T) {
-	setup := testutils.PreTestSetup("debug")
+	setup := testutils.PreTestSetup("prod")
 	defer setup()
 
 	r := getRouter()

@@ -10,6 +10,7 @@ import (
 	"github.com/Jashanpreet2/fragments/internal/config"
 	"github.com/Jashanpreet2/fragments/internal/fragment"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
 
 var modeAdded = false
@@ -20,6 +21,9 @@ func PreTestSetup(mode string) func() {
 		modeAdded = true
 	} else {
 		os.Args[len(os.Args)-1] = mode
+	}
+	if mode == "debug" {
+		godotenv.Load("../../")
 	}
 	config.Config()
 	return func() {
